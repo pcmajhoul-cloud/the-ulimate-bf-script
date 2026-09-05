@@ -1,1 +1,1626 @@
-Blitz
+--// MODERN FLOATING CONTROL UI
+--// Single-file Roblox LocalScript
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+
+--==================================================
+-- CONFIG
+--==================================================
+
+local LOGO_IMAGE = "rbxassetid://123456789"
+
+local CARD_WIDTH = 560
+local CARD_HEIGHT = 400
+
+local FLOAT_SIZE = 62
+local SIDEBAR_WIDTH = 135
+local HEADER_HEIGHT = 68
+
+local MIN_HEIGHT = 68
+
+local Colors = {
+	Background = Color3.fromRGB(17, 18, 23),
+	Header = Color3.fromRGB(23, 24, 30),
+	Sidebar = Color3.fromRGB(14, 15, 20),
+	Panel = Color3.fromRGB(21, 22, 28),
+	Button = Color3.fromRGB(29, 30, 38),
+	ButtonHover = Color3.fromRGB(40, 41, 51),
+
+	Text = Color3.fromRGB(245, 246, 250),
+	SubText = Color3.fromRGB(145, 148, 160),
+	Border = Color3.fromRGB(55, 57, 70),
+
+	Accent = Color3.fromRGB(126, 91, 255),
+	Off = Color3.fromRGB(57, 59, 69),
+	White = Color3.fromRGB(255, 255, 255)
+}
+
+local AccentColors = {
+	Color3.fromRGB(126, 91, 255),
+	Color3.fromRGB(0, 170, 255),
+	Color3.fromRGB(0, 210, 150),
+	Color3.fromRGB(255, 95, 125),
+	Color3.fromRGB(255, 170, 60),
+	Color3.fromRGB(180, 80, 255)
+}
+
+--==================================================
+-- STATE
+--==================================================
+
+local CurrentPage = "MAIN"
+
+local CardOpen = false
+local Minimized = false
+local Maximized = false
+
+local HasCustomCardPosition = false
+local SavedCardPosition = UDim2.new(0.5, 0, 0.5, 0)
+
+local SavedCardSize = UDim2.new(0, CARD_WIDTH, 0, CARD_HEIGHT)
+
+local AccentIndex = 1
+local AnimationSpeed = 0.18
+local UIScaleValue = 1
+local TransparencyValue = 0
+
+local SettingsState = {
+	RemoveFog = false,
+	PerformanceMode = false,
+	Shadows = true,
+	LowGraphics = false,
+	BackgroundBlur = false
+}
+
+local OriginalFogStart = Lighting.FogStart
+local OriginalFogEnd = Lighting.FogEnd
+local OriginalGlobalShadows = Lighting.GlobalShadows
+
+local OriginalParticleStates = {}
+local OriginalTrailStates = {}
+local OriginalBeamStates = {}
+
+--==================================================
+-- HELPERS
+--==================================================
+
+local function Tween(object, properties, duration)
+	local info = TweenInfo.new(
+		duration or AnimationSpeed,
+		Enum.EasingStyle.Quart,
+		Enum.EasingDirection.Out
+	)
+
+	local tween = TweenService:Create(object, info, properties)
+	tween:Play()
+
+	return tween
+end
+
+local function AddCorner(object, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, radius)
+	corner.Parent = object
+	return corner
+end
+
+local function AddStroke(object, color, thickness)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color
+	stroke.Thickness = thickness or 1
+	stroke.Transparency = 0
+	stroke.Parent = object
+	return stroke
+end
+
+local function MakeText(parent, text, size, color, font)
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = color or Colors.Text
+	label.TextSize = size or 14
+	label.Font = font or Enum.Font.Gotham
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = parent
+	return label
+end
+
+local function GetAccent()
+	return AccentColors[AccentIndex]
+end
+
+local function Notify(text)
+	local notification = Instance.new("Frame")
+	notification.Name = "Notification"
+	notification.Size = UDim2.new(0, 270, 0, 52)
+	notification.Position = UDim2.new(1, 20, 1, -75)
+	notification.AnchorPoint = Vector2.new(0, 1)
+	notification.BackgroundColor3 = Colors.Panel
+	notification.BorderSizePixel = 0
+	notification.Parent = ScreenGui
+
+	AddCorner(notification, 12)
+	AddStroke(notification, Colors.Border)
+
+	local accent = Instance.new("Frame")
+	accent.Size = UDim2.new(0, 4, 1, 0)
+	accent.BackgroundColor3 = GetAccent()
+	accent.BorderSizePixel = 0
+	accent.Parent = notification
+
+	AddCorner(accent, 4)
+
+	local textLabel = MakeText(
+		notification,
+		text,
+		13,
+		Colors.Text,
+		Enum.Font.GothamMedium
+	)
+
+	textLabel.Position = UDim2.new(0, 17, 0, 0)
+	textLabel.Size = UDim2.new(1, -25, 1, 0)
+
+	Tween(
+		notification,
+		{Position = UDim2.new(1, -20, 1, -75)},
+		0.3
+	)
+
+	task.delay(2.5, function()
+		if notification.Parent then
+			Tween(
+				notification,
+				{Position = UDim2.new(1, 20, 1, -75)},
+				0.3
+			)
+
+			task.wait(0.3)
+			notification:Destroy()
+		end
+	end)
+end
+
+--==================================================
+-- GUI
+--==================================================
+
+local oldGui = Player:WaitForChild("PlayerGui"):FindFirstChild("ModernFloatingControlUI")
+
+if oldGui then
+	oldGui:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ModernFloatingControlUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+
+local RootScale = Instance.new("UIScale")
+RootScale.Scale = UIScaleValue
+RootScale.Parent = ScreenGui
+
+--==================================================
+-- FLOATING LOGO
+--==================================================
+
+local Floating = Instance.new("ImageButton")
+Floating.Name = "FloatingLogo"
+Floating.Size = UDim2.new(0, FLOAT_SIZE, 0, FLOAT_SIZE)
+Floating.Position = UDim2.new(0, 25, 0.5, -FLOAT_SIZE / 2)
+Floating.BackgroundColor3 = Colors.Background
+Floating.BorderSizePixel = 0
+Floating.Image = LOGO_IMAGE
+Floating.ScaleType = Enum.ScaleType.Fit
+Floating.AutoButtonColor = false
+Floating.Parent = ScreenGui
+
+AddCorner(Floating, 18)
+
+local FloatingStroke = AddStroke(
+	Floating,
+	GetAccent(),
+	2
+)
+
+local FloatingScale = Instance.new("UIScale")
+FloatingScale.Scale = 1
+FloatingScale.Parent = Floating
+
+--==================================================
+-- MAIN CARD
+--==================================================
+
+local Card = Instance.new("Frame")
+Card.Name = "MainCard"
+Card.AnchorPoint = Vector2.new(0.5, 0.5)
+Card.Size = UDim2.new(0, CARD_WIDTH, 0, CARD_HEIGHT)
+Card.Position = SavedCardPosition
+Card.BackgroundColor3 = Colors.Background
+Card.BorderSizePixel = 0
+Card.Visible = false
+Card.ClipsDescendants = true
+Card.Parent = ScreenGui
+
+AddCorner(Card, 16)
+AddStroke(Card, Colors.Border)
+
+--==================================================
+-- HEADER
+--==================================================
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
+Header.BackgroundColor3 = Colors.Header
+Header.BorderSizePixel = 0
+Header.Parent = Card
+
+local HeaderTitle = MakeText(
+	Header,
+	"CONTROL PANEL",
+	15,
+	Colors.Text,
+	Enum.Font.GothamBold
+)
+
+HeaderTitle.Position = UDim2.new(0, 18, 0, 12)
+HeaderTitle.Size = UDim2.new(0, 240, 0, 22)
+
+local HeaderSubtitle = MakeText(
+	Header,
+	"Modern interface",
+	11,
+	Colors.SubText,
+	Enum.Font.Gotham
+)
+
+HeaderSubtitle.Position = UDim2.new(0, 18, 0, 36)
+HeaderSubtitle.Size = UDim2.new(0, 240, 0, 18)
+
+--==================================================
+-- WINDOW BUTTONS
+--==================================================
+
+local WindowButtons = Instance.new("Frame")
+WindowButtons.BackgroundTransparency = 1
+WindowButtons.Size = UDim2.new(0, 105, 0, 35)
+WindowButtons.Position = UDim2.new(1, -115, 0, 16)
+WindowButtons.Parent = Header
+
+local WindowLayout = Instance.new("UIListLayout")
+WindowLayout.FillDirection = Enum.FillDirection.Horizontal
+WindowLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+WindowLayout.Padding = UDim.new(0, 5)
+WindowLayout.Parent = WindowButtons
+
+local function WindowButton(symbol)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0, 30, 0, 30)
+	button.BackgroundColor3 = Colors.Button
+	button.Text = symbol
+	button.TextColor3 = Colors.Text
+	button.TextSize = 15
+	button.Font = Enum.Font.GothamBold
+	button.AutoButtonColor = false
+	button.Parent = WindowButtons
+
+	AddCorner(button, 8)
+
+	button.MouseEnter:Connect(function()
+		Tween(button, {
+			BackgroundColor3 = Colors.ButtonHover
+		}, 0.12)
+	end)
+
+	button.MouseLeave:Connect(function()
+		Tween(button, {
+			BackgroundColor3 = Colors.Button
+		}, 0.12)
+	end)
+
+	return button
+end
+
+local MinimizeButton = WindowButton("—")
+local MaximizeButton = WindowButton("□")
+local CloseButton = WindowButton("×")
+
+--==================================================
+-- SIDEBAR
+--==================================================
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Position = UDim2.new(0, 0, 0, HEADER_HEIGHT)
+Sidebar.Size = UDim2.new(0, SIDEBAR_WIDTH, 1, -HEADER_HEIGHT)
+Sidebar.BackgroundColor3 = Colors.Sidebar
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = Card
+
+local SidebarPadding = Instance.new("UIPadding")
+SidebarPadding.PaddingTop = UDim.new(0, 14)
+SidebarPadding.PaddingLeft = UDim.new(0, 10)
+SidebarPadding.PaddingRight = UDim.new(0, 10)
+SidebarPadding.Parent = Sidebar
+
+local SidebarLayout = Instance.new("UIListLayout")
+SidebarLayout.Padding = UDim.new(0, 7)
+SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarLayout.Parent = Sidebar
+
+local ActiveIndicator = Instance.new("Frame")
+ActiveIndicator.Name = "ActiveIndicator"
+ActiveIndicator.Size = UDim2.new(0, 3, 0, 38)
+ActiveIndicator.Position = UDim2.new(0, 0, 0, 21)
+ActiveIndicator.BackgroundColor3 = GetAccent()
+ActiveIndicator.BorderSizePixel = 0
+ActiveIndicator.Parent = Sidebar
+
+AddCorner(ActiveIndicator, 3)
+
+--==================================================
+-- CONTENT
+--==================================================
+
+local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.Position = UDim2.new(0, SIDEBAR_WIDTH + 10, 0, HEADER_HEIGHT + 10)
+Content.Size = UDim2.new(1, -SIDEBAR_WIDTH - 20, 1, -HEADER_HEIGHT - 20)
+Content.BackgroundTransparency = 1
+Content.Parent = Card
+
+--==================================================
+-- PAGES
+--==================================================
+
+local MainPage = Instance.new("Frame")
+MainPage.BackgroundTransparency = 1
+MainPage.Size = UDim2.new(1, 0, 1, 0)
+MainPage.Parent = Content
+
+local SettingsPage = Instance.new("ScrollingFrame")
+SettingsPage.BackgroundTransparency = 1
+SettingsPage.Size = UDim2.new(1, 0, 1, 0)
+SettingsPage.ScrollBarThickness = 3
+SettingsPage.ScrollBarImageColor3 = GetAccent()
+SettingsPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+SettingsPage.Visible = false
+SettingsPage.Parent = Content
+
+local AboutPage = Instance.new("Frame")
+AboutPage.BackgroundTransparency = 1
+AboutPage.Size = UDim2.new(1, 0, 1, 0)
+AboutPage.Visible = false
+AboutPage.Parent = Content
+
+--==================================================
+-- PAGE TITLE
+--==================================================
+
+local function PageTitle(parent, title, subtitle)
+	local titleLabel = MakeText(
+		parent,
+		title,
+		20,
+		Colors.Text,
+		Enum.Font.GothamBold
+	)
+
+	titleLabel.Position = UDim2.new(0, 5, 0, 2)
+	titleLabel.Size = UDim2.new(1, -10, 0, 30)
+
+	local subtitleLabel = MakeText(
+		parent,
+		subtitle,
+		11,
+		Colors.SubText
+	)
+
+	subtitleLabel.Position = UDim2.new(0, 5, 0, 31)
+	subtitleLabel.Size = UDim2.new(1, -10, 0, 20)
+
+	return titleLabel
+end
+
+PageTitle(
+	MainPage,
+	"Dashboard",
+	"Quick information and controls"
+)
+
+PageTitle(
+	SettingsPage,
+	"Settings",
+	"Customize your interface"
+)
+
+PageTitle(
+	AboutPage,
+	"About",
+	"Information about this interface"
+)
+
+--==================================================
+-- DASHBOARD CARDS
+--==================================================
+
+local DashboardContainer = Instance.new("Frame")
+DashboardContainer.BackgroundTransparency = 1
+DashboardContainer.Position = UDim2.new(0, 5, 0, 65)
+DashboardContainer.Size = UDim2.new(1, -10, 0, 105)
+DashboardContainer.Parent = MainPage
+
+local DashboardLayout = Instance.new("UIGridLayout")
+DashboardLayout.CellSize = UDim2.new(0.5, -5, 0, 48)
+DashboardLayout.CellPadding = UDim2.new(0, 8, 0, 8)
+DashboardLayout.Parent = DashboardContainer
+
+local function StatCard(title, value)
+	local card = Instance.new("Frame")
+	card.BackgroundColor3 = Colors.Panel
+	card.BorderSizePixel = 0
+	card.Parent = DashboardContainer
+
+	AddCorner(card, 10)
+	AddStroke(card, Colors.Border)
+
+	local t = MakeText(
+		card,
+		title,
+		10,
+		Colors.SubText
+	)
+
+	t.Position = UDim2.new(0, 12, 0, 7)
+	t.Size = UDim2.new(1, -24, 0, 15)
+
+	local v = MakeText(
+		card,
+		value,
+		15,
+		Colors.Text,
+		Enum.Font.GothamBold
+	)
+
+	v.Name = "Value"
+	v.Position = UDim2.new(0, 12, 0, 23)
+	v.Size = UDim2.new(1, -24, 0, 20)
+
+	return v
+end
+
+local FPSValue = StatCard("FPS", "0")
+local PingValue = StatCard("PING", "0 ms")
+local MemoryValue = StatCard("MEMORY", "0 MB")
+local SessionValue = StatCard("SESSION", "00:00")
+
+--==================================================
+-- QUICK ACTION
+--==================================================
+
+local QuickPanel = Instance.new("Frame")
+QuickPanel.Position = UDim2.new(0, 5, 0, 180)
+QuickPanel.Size = UDim2.new(1, -10, 0, 100)
+QuickPanel.BackgroundColor3 = Colors.Panel
+QuickPanel.BorderSizePixel = 0
+QuickPanel.Parent = MainPage
+
+AddCorner(QuickPanel, 12)
+AddStroke(QuickPanel, Colors.Border)
+
+local QuickTitle = MakeText(
+	QuickPanel,
+	"Quick Action",
+	14,
+	Colors.Text,
+	Enum.Font.GothamBold
+)
+
+QuickTitle.Position = UDim2.new(0, 14, 0, 12)
+QuickTitle.Size = UDim2.new(1, -28, 0, 20)
+
+local QuickDescription = MakeText(
+	QuickPanel,
+	"Open the settings page and customize your interface.",
+	10,
+	Colors.SubText
+)
+
+QuickDescription.Position = UDim2.new(0, 14, 0, 35)
+QuickDescription.Size = UDim2.new(1, -28, 0, 20)
+
+local QuickButton = Instance.new("TextButton")
+QuickButton.Size = UDim2.new(0, 125, 0, 30)
+QuickButton.Position = UDim2.new(1, -140, 1, -42)
+QuickButton.BackgroundColor3 = GetAccent()
+QuickButton.Text = "SETTINGS"
+QuickButton.TextColor3 = Colors.White
+QuickButton.TextSize = 11
+QuickButton.Font = Enum.Font.GothamBold
+QuickButton.AutoButtonColor = false
+QuickButton.Parent = QuickPanel
+
+AddCorner(QuickButton, 8)
+
+--==================================================
+-- SIDEBAR BUTTONS
+--==================================================
+
+local TabButtons = {}
+
+local function CreateTab(name, icon, order)
+	local button = Instance.new("TextButton")
+	button.Name = name
+	button.Size = UDim2.new(1, 0, 0, 38)
+	button.BackgroundColor3 = Colors.Sidebar
+	button.Text = ""
+	button.AutoButtonColor = false
+	button.LayoutOrder = order
+	button.Parent = Sidebar
+
+	AddCorner(button, 9)
+
+	local iconLabel = MakeText(
+		button,
+		icon,
+		15,
+		Colors.SubText,
+		Enum.Font.GothamBold
+	)
+
+	iconLabel.Name = "Icon"
+	iconLabel.Position = UDim2.new(0, 10, 0, 0)
+	iconLabel.Size = UDim2.new(0, 24, 1, 0)
+	iconLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+	local textLabel = MakeText(
+		button,
+		name,
+		11,
+		Colors.SubText,
+		Enum.Font.GothamMedium
+	)
+
+	textLabel.Name = "Label"
+	textLabel.Position = UDim2.new(0, 39, 0, 0)
+	textLabel.Size = UDim2.new(1, -45, 1, 0)
+
+	button.MouseEnter:Connect(function()
+		if CurrentPage ~= name then
+			Tween(button, {
+				BackgroundColor3 = Colors.Button
+			}, 0.12)
+		end
+	end)
+
+	button.MouseLeave:Connect(function()
+		if CurrentPage ~= name then
+			Tween(button, {
+				BackgroundColor3 = Colors.Sidebar
+			}, 0.12)
+		end
+	end)
+
+	TabButtons[name] = button
+
+	return button
+end
+
+local MainTab = CreateTab("MAIN", "⌂", 1)
+local SettingsTab = CreateTab("SETTINGS", "⚙", 2)
+local AboutTab = CreateTab("ABOUT", "ⓘ", 3)
+
+--==================================================
+-- PAGE SWITCHING
+--==================================================
+
+local function UpdateTabVisuals()
+	for name, button in pairs(TabButtons) do
+		local selected = name == CurrentPage
+
+		Tween(button, {
+			BackgroundColor3 = selected and Colors.Button or Colors.Sidebar
+		}, 0.15)
+
+		local icon = button:FindFirstChild("Icon")
+		local label = button:FindFirstChild("Label")
+
+		if icon then
+			Tween(icon, {
+				TextColor3 = selected and GetAccent() or Colors.SubText
+			}, 0.15)
+		end
+
+		if label then
+			Tween(label, {
+				TextColor3 = selected and Colors.Text or Colors.SubText
+			}, 0.15)
+		end
+	end
+
+	local selectedButton = TabButtons[CurrentPage]
+
+	if selectedButton then
+		Tween(
+			ActiveIndicator,
+			{
+				Position = UDim2.new(
+					0,
+					0,
+					0,
+					selectedButton.AbsolutePosition.Y - Sidebar.AbsolutePosition.Y
+				),
+				BackgroundColor3 = GetAccent()
+			},
+			0.2
+		)
+	end
+end
+
+local function SwitchPage(page)
+	CurrentPage = page
+
+	MainPage.Visible = page == "MAIN"
+	SettingsPage.Visible = page == "SETTINGS"
+	AboutPage.Visible = page == "ABOUT"
+
+	UpdateTabVisuals()
+end
+
+MainTab.MouseButton1Click:Connect(function()
+	SwitchPage("MAIN")
+end)
+
+SettingsTab.MouseButton1Click:Connect(function()
+	SwitchPage("SETTINGS")
+end)
+
+AboutTab.MouseButton1Click:Connect(function()
+	SwitchPage("ABOUT")
+end)
+
+QuickButton.MouseButton1Click:Connect(function()
+	SwitchPage("SETTINGS")
+end)
+
+--==================================================
+-- TOGGLE SYSTEM
+--==================================================
+
+local function CreateToggle(parent, title, description, y, callback)
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, -10, 0, 58)
+	container.Position = UDim2.new(0, 5, 0, y)
+	container.BackgroundColor3 = Colors.Panel
+	container.BorderSizePixel = 0
+	container.Parent = parent
+
+	AddCorner(container, 10)
+	AddStroke(container, Colors.Border)
+
+	local titleLabel = MakeText(
+		container,
+		title,
+		12,
+		Colors.Text,
+		Enum.Font.GothamMedium
+	)
+
+	titleLabel.Position = UDim2.new(0, 14, 0, 9)
+	titleLabel.Size = UDim2.new(1, -85, 0, 18)
+
+	local descLabel = MakeText(
+		container,
+		description,
+		9,
+		Colors.SubText
+	)
+
+	descLabel.Position = UDim2.new(0, 14, 0, 29)
+	descLabel.Size = UDim2.new(1, -85, 0, 15)
+
+	local toggle = Instance.new("TextButton")
+	toggle.Size = UDim2.new(0, 44, 0, 24)
+	toggle.Position = UDim2.new(1, -58, 0.5, -12)
+	toggle.BackgroundColor3 = Colors.Off
+	toggle.Text = ""
+	toggle.AutoButtonColor = false
+	toggle.Parent = container
+
+	AddCorner(toggle, 12)
+
+	local knob = Instance.new("Frame")
+	knob.Size = UDim2.new(0, 18, 0, 18)
+	knob.Position = UDim2.new(0, 3, 0.5, -9)
+	knob.BackgroundColor3 = Colors.White
+	knob.BorderSizePixel = 0
+	knob.Parent = toggle
+
+	AddCorner(knob, 9)
+
+	local enabled = false
+
+	local function SetEnabled(value, silent)
+		enabled = value
+
+		Tween(
+			toggle,
+			{
+				BackgroundColor3 = enabled and GetAccent() or Colors.Off
+			},
+			0.15
+		)
+
+		Tween(
+			knob,
+			{
+				Position = enabled
+					and UDim2.new(1, -21, 0.5, -9)
+					or UDim2.new(0, 3, 0.5, -9)
+			},
+			0.15
+		)
+
+		callback(enabled, silent)
+	end
+
+	toggle.MouseButton1Click:Connect(function()
+		SetEnabled(not enabled, false)
+	end)
+
+	return {
+		Set = SetEnabled,
+		Get = function()
+			return enabled
+		end
+	}
+end
+
+--==================================================
+-- SETTINGS FUNCTIONS
+--==================================================
+
+local function SetFog(value)
+	if value then
+		Lighting.FogStart = 0
+		Lighting.FogEnd = 1000000
+	else
+		Lighting.FogStart = OriginalFogStart
+		Lighting.FogEnd = OriginalFogEnd
+	end
+end
+
+local function SaveEffectStates()
+	for _, object in ipairs(workspace:GetDescendants()) do
+		if object:IsA("ParticleEmitter") then
+			OriginalParticleStates[object] = object.Enabled
+		elseif object:IsA("Trail") then
+			OriginalTrailStates[object] = object.Enabled
+		elseif object:IsA("Beam") then
+			OriginalBeamStates[object] = object.Enabled
+		end
+	end
+end
+
+SaveEffectStates()
+
+local function SetPerformanceMode(value)
+	if value then
+		for object in pairs(OriginalParticleStates) do
+			if object.Parent then
+				object.Enabled = false
+			end
+		end
+
+		for object in pairs(OriginalTrailStates) do
+			if object.Parent then
+				object.Enabled = false
+			end
+		end
+
+		for object in pairs(OriginalBeamStates) do
+			if object.Parent then
+				object.Enabled = false
+			end
+		end
+	else
+		for object, state in pairs(OriginalParticleStates) do
+			if object.Parent then
+				object.Enabled = state
+			end
+		end
+
+		for object, state in pairs(OriginalTrailStates) do
+			if object.Parent then
+				object.Enabled = state
+			end
+		end
+
+		for object, state in pairs(OriginalBeamStates) do
+			if object.Parent then
+				object.Enabled = state
+			end
+		end
+	end
+end
+
+local function SetShadows(value)
+	Lighting.GlobalShadows = value
+end
+
+local function SetLowGraphics(value)
+	if value then
+		Lighting.GlobalShadows = false
+	else
+		Lighting.GlobalShadows = SettingsState.Shadows
+	end
+end
+
+local Blur
+
+local function SetBlur(value)
+	if value then
+		if not Blur then
+			Blur = Instance.new("BlurEffect")
+			Blur.Name = "ControlPanelBlur"
+			Blur.Size = 8
+			Blur.Parent = Lighting
+		end
+
+		Blur.Enabled = true
+	else
+		if Blur then
+			Blur.Enabled = false
+		end
+	end
+end
+
+--==================================================
+-- SETTINGS UI
+--==================================================
+
+local FogToggle = CreateToggle(
+	SettingsPage,
+	"Remove Fog",
+	"Remove distant fog from the environment.",
+	62,
+	function(value)
+		SettingsState.RemoveFog = value
+		SetFog(value)
+
+		if not value then
+			Notify("Fog restored")
+		else
+			Notify("Fog removed")
+		end
+	end
+)
+
+local PerformanceToggle = CreateToggle(
+	SettingsPage,
+	"Performance Mode",
+	"Disable visual effects to reduce rendering work.",
+	126,
+	function(value)
+		SettingsState.PerformanceMode = value
+		SetPerformanceMode(value)
+
+		Notify(value and "Performance mode enabled" or "Performance mode disabled")
+	end
+)
+
+local ShadowsToggle = CreateToggle(
+	SettingsPage,
+	"Shadows",
+	"Enable or disable global lighting shadows.",
+	190,
+	function(value)
+		SettingsState.Shadows = value
+		SetShadows(value)
+	end
+)
+
+ShadowsToggle.Set(true, true)
+
+local LowGraphicsToggle = CreateToggle(
+	SettingsPage,
+	"Low Graphics",
+	"Use simpler lighting settings.",
+	254,
+	function(value)
+		SettingsState.LowGraphics = value
+		SetLowGraphics(value)
+	end
+)
+
+local BlurToggle = CreateToggle(
+	SettingsPage,
+	"Background Blur",
+	"Apply a soft blur effect to the environment.",
+	318,
+	function(value)
+		SettingsState.BackgroundBlur = value
+		SetBlur(value)
+	end
+)
+
+SettingsPage.CanvasSize = UDim2.new(0, 0, 0, 390)
+
+--==================================================
+-- RESET SETTINGS
+--==================================================
+
+local ResetButton = Instance.new("TextButton")
+ResetButton.Size = UDim2.new(1, -10, 0, 38)
+ResetButton.Position = UDim2.new(0, 5, 0, 382)
+ResetButton.BackgroundColor3 = Colors.Button
+ResetButton.Text = "RESET ALL SETTINGS"
+ResetButton.TextColor3 = Colors.Text
+ResetButton.TextSize = 11
+ResetButton.Font = Enum.Font.GothamBold
+ResetButton.AutoButtonColor = false
+ResetButton.Parent = SettingsPage
+
+AddCorner(ResetButton, 9)
+AddStroke(ResetButton, Colors.Border)
+
+ResetButton.MouseEnter:Connect(function()
+	Tween(ResetButton, {
+		BackgroundColor3 = Colors.ButtonHover
+	}, 0.12)
+end)
+
+ResetButton.MouseLeave:Connect(function()
+	Tween(ResetButton, {
+		BackgroundColor3 = Colors.Button
+	}, 0.12)
+end)
+
+ResetButton.MouseButton1Click:Connect(function()
+	FogToggle.Set(false, true)
+	PerformanceToggle.Set(false, true)
+	ShadowsToggle.Set(true, true)
+	LowGraphicsToggle.Set(false, true)
+	BlurToggle.Set(false, true)
+
+	Lighting.GlobalShadows = OriginalGlobalShadows
+	Lighting.FogStart = OriginalFogStart
+	Lighting.FogEnd = OriginalFogEnd
+
+	Notify("Settings reset")
+end)
+
+--==================================================
+-- UI CUSTOMIZATION PANEL
+--==================================================
+
+local CustomPanel = Instance.new("Frame")
+CustomPanel.Size = UDim2.new(1, -10, 0, 225)
+CustomPanel.Position = UDim2.new(0, 5, 0, 390)
+CustomPanel.BackgroundColor3 = Colors.Panel
+CustomPanel.BorderSizePixel = 0
+CustomPanel.Parent = SettingsPage
+
+AddCorner(CustomPanel, 10)
+AddStroke(CustomPanel, Colors.Border)
+
+local CustomTitle = MakeText(
+	CustomPanel,
+	"Interface",
+	13,
+	Colors.Text,
+	Enum.Font.GothamBold
+)
+
+CustomTitle.Position = UDim2.new(0, 14, 0, 12)
+CustomTitle.Size = UDim2.new(1, -28, 0, 20)
+
+--==================================================
+-- SLIDER CREATOR
+--==================================================
+
+local function CreateSlider(parent, title, y, minValue, maxValue, defaultValue, callback)
+	local label = MakeText(
+		parent,
+		title,
+		10,
+		Colors.SubText,
+		Enum.Font.GothamMedium
+	)
+
+	label.Position = UDim2.new(0, 14, 0, y)
+	label.Size = UDim2.new(0, 150, 0, 18)
+
+	local valueLabel = MakeText(
+		parent,
+		tostring(defaultValue),
+		10,
+		Colors.Text,
+		Enum.Font.GothamBold
+	)
+
+	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+	valueLabel.Position = UDim2.new(1, -65, 0, y)
+	valueLabel.Size = UDim2.new(0, 50, 0, 18)
+
+	local bar = Instance.new("Frame")
+	bar.Size = UDim2.new(1, -28, 0, 5)
+	bar.Position = UDim2.new(0, 14, 0, y + 25)
+	bar.BackgroundColor3 = Colors.Off
+	bar.BorderSizePixel = 0
+	bar.Parent = parent
+
+	AddCorner(bar, 3)
+
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.new(
+		(defaultValue - minValue) / (maxValue - minValue),
+		0,
+		1,
+		0
+	)
+	fill.BackgroundColor3 = GetAccent()
+	fill.BorderSizePixel = 0
+	fill.Parent = bar
+
+	AddCorner(fill, 3)
+
+	local dragging = false
+
+	local function SetFromX(x)
+		local percent = math.clamp(
+			(x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X,
+			0,
+			1
+		)
+
+		local value = minValue + (maxValue - minValue) * percent
+
+		valueLabel.Text = tostring(math.floor(value))
+
+		Tween(fill, {
+			Size = UDim2.new(percent, 0, 1, 0)
+		}, 0.08)
+
+		callback(value)
+	end
+
+	bar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
+			dragging = true
+			SetFromX(input.Position.X)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch
+		) then
+			SetFromX(input.Position.X)
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	return {
+		Set = function(value)
+			local percent = math.clamp(
+				(value - minValue) / (maxValue - minValue),
+				0,
+				1
+			)
+
+			valueLabel.Text = tostring(math.floor(value))
+
+			Tween(fill, {
+				Size = UDim2.new(percent, 0, 1, 0)
+			}, 0.15)
+
+			callback(value)
+		end
+	}
+end
+
+local ScaleSlider = CreateSlider(
+	CustomPanel,
+	"UI Scale",
+	42,
+	80,
+	120,
+	100,
+	function(value)
+		UIScaleValue = value / 100
+		RootScale.Scale = UIScaleValue
+	end
+)
+
+local TransparencySlider = CreateSlider(
+	CustomPanel,
+	"UI Transparency",
+	91,
+	0,
+	70,
+	0,
+	function(value)
+		TransparencyValue = value / 100
+
+		Card.BackgroundTransparency = TransparencyValue
+		Header.BackgroundTransparency = TransparencyValue
+		Sidebar.BackgroundTransparency = math.min(TransparencyValue + 0.1, 1)
+	end
+)
+
+local AnimationSlider = CreateSlider(
+	CustomPanel,
+	"Animation Speed",
+	140,
+	5,
+	50,
+	18,
+	function(value)
+		AnimationSpeed = value / 100
+	end
+)
+
+--==================================================
+-- ACCENT COLORS
+--==================================================
+
+local AccentTitle = MakeText(
+	CustomPanel,
+	"Accent Color",
+	10,
+	Colors.SubText,
+	Enum.Font.GothamMedium
+)
+
+AccentTitle.Position = UDim2.new(0, 14, 0, 189)
+AccentTitle.Size = UDim2.new(0, 100, 0, 18)
+
+local AccentContainer = Instance.new("Frame")
+AccentContainer.BackgroundTransparency = 1
+AccentContainer.Size = UDim2.new(1, -125, 0, 25)
+AccentContainer.Position = UDim2.new(0, 115, 0, 186)
+AccentContainer.Parent = CustomPanel
+
+local AccentLayout = Instance.new("UIListLayout")
+AccentLayout.FillDirection = Enum.FillDirection.Horizontal
+AccentLayout.Padding = UDim.new(0, 5)
+AccentLayout.Parent = AccentContainer
+
+local function RefreshAccent()
+	local accent = GetAccent()
+
+	FloatingStroke.Color = accent
+	ActiveIndicator.BackgroundColor3 = accent
+	QuickButton.BackgroundColor3 = accent
+
+	for _, object in ipairs(ScreenGui:GetDescendants()) do
+		if object:IsA("Frame") and object.Name == "FillAccent" then
+			object.BackgroundColor3 = accent
+		end
+
+		if object:IsA("Frame") and object.Name == "AccentColor" then
+			object.BackgroundColor3 = accent
+		end
+	end
+
+	SettingsPage.ScrollBarImageColor3 = accent
+
+	UpdateTabVisuals()
+end
+
+for index, color in ipairs(AccentColors) do
+	local colorButton = Instance.new("TextButton")
+	colorButton.Name = "AccentColor"
+	colorButton.Size = UDim2.new(0, 23, 0, 23)
+	colorButton.BackgroundColor3 = color
+	colorButton.Text = ""
+	colorButton.AutoButtonColor = false
+	colorButton.Parent = AccentContainer
+
+	AddCorner(colorButton, 7)
+
+	colorButton.MouseButton1Click:Connect(function()
+		AccentIndex = index
+		RefreshAccent()
+		Notify("Accent color changed")
+	end)
+end
+
+--==================================================
+-- ABOUT PAGE
+--==================================================
+
+local AboutPanel = Instance.new("Frame")
+AboutPanel.Position = UDim2.new(0, 5, 0, 65)
+AboutPanel.Size = UDim2.new(1, -10, 0, 190)
+AboutPanel.BackgroundColor3 = Colors.Panel
+AboutPanel.BorderSizePixel = 0
+AboutPanel.Parent = AboutPage
+
+AddCorner(AboutPanel, 12)
+AddStroke(AboutPanel, Colors.Border)
+
+local AboutLogo = Instance.new("ImageLabel")
+AboutLogo.BackgroundTransparency = 1
+AboutLogo.Size = UDim2.new(0, 70, 0, 70)
+AboutLogo.Position = UDim2.new(0, 20, 0, 20)
+AboutLogo.Image = LOGO_IMAGE
+AboutLogo.Parent = AboutPanel
+
+local AboutName = MakeText(
+	AboutPanel,
+	"CONTROL PANEL",
+	17,
+	Colors.Text,
+	Enum.Font.GothamBold
+)
+
+AboutName.Position = UDim2.new(0, 105, 0, 25)
+AboutName.Size = UDim2.new(1, -125, 0, 25)
+
+local AboutVersion = MakeText(
+	AboutPanel,
+	"Version 1.0",
+	10,
+	GetAccent(),
+	Enum.Font.GothamMedium
+)
+
+AboutVersion.Position = UDim2.new(0, 105, 0, 52)
+AboutVersion.Size = UDim2.new(1, -125, 0, 18)
+
+local AboutDescription = MakeText(
+	AboutPanel,
+	"Single-file modern floating interface.",
+	10,
+	Colors.SubText
+)
+
+AboutDescription.Position = UDim2.new(0, 105, 0, 75)
+AboutDescription.Size = UDim2.new(1, -125, 0, 35)
+AboutDescription.TextWrapped = true
+
+--==================================================
+-- FPS / PING / SESSION
+--==================================================
+
+local LastFrame = os.clock()
+local Frames = 0
+local FPS = 0
+local SessionStart = os.clock()
+
+RunService.RenderStepped:Connect(function()
+	Frames += 1
+
+	local now = os.clock()
+
+	if now - LastFrame >= 1 then
+		FPS = Frames
+		Frames = 0
+		LastFrame = now
+
+		FPSValue.Text = tostring(FPS)
+
+		local success, ping = pcall(function()
+			return Player:GetNetworkPing() * 1000
+		end)
+
+		if success then
+			PingValue.Text = math.floor(ping) .. " ms"
+		end
+
+		local memory = collectgarbage("count") / 1024
+		MemoryValue.Text = string.format("%.1f MB", memory)
+
+		local elapsed = math.floor(now - SessionStart)
+		local minutes = math.floor(elapsed / 60)
+		local seconds = elapsed % 60
+
+		SessionValue.Text = string.format(
+			"%02d:%02d",
+			minutes,
+			seconds
+		)
+	end
+end)
+
+--==================================================
+-- DRAGGING
+--==================================================
+
+local function MakeDraggable(object, callback)
+	local dragging = false
+	local dragStart
+	local startPosition
+
+	object.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
+			dragging = true
+			dragStart = input.Position
+			startPosition = object.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+
+					if callback then
+						callback()
+					end
+				end
+			end)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch
+		) then
+
+			local delta = input.Position - dragStart
+
+			object.Position = UDim2.new(
+				startPosition.X.Scale,
+				startPosition.X.Offset + delta.X,
+				startPosition.Y.Scale,
+				startPosition.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+-- Header dragging
+MakeDraggable(Header, function()
+	SavedCardPosition = Card.Position
+	HasCustomCardPosition = true
+end)
+
+--==================================================
+-- FLOATING LOGO DRAGGING
+--==================================================
+
+local LogoDragging = false
+local LogoDragStart
+local LogoStartPosition
+local LogoMoved = false
+
+Floating.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		LogoDragging = true
+		LogoMoved = false
+		LogoDragStart = input.Position
+		LogoStartPosition = Floating.Position
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if LogoDragging and (
+		input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch
+	) then
+
+		local delta = input.Position - LogoDragStart
+
+		if math.abs(delta.X) > 6 or math.abs(delta.Y) > 6 then
+			LogoMoved = true
+		end
+
+		Floating.Position = UDim2.new(
+			LogoStartPosition.X.Scale,
+			LogoStartPosition.X.Offset + delta.X,
+			LogoStartPosition.Y.Scale,
+			LogoStartPosition.Y.Offset + delta.Y
+		)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		if LogoDragging and not LogoMoved then
+			CardOpen = not CardOpen
+
+			if CardOpen then
+				Card.Visible = true
+
+				if not HasCustomCardPosition then
+					Card.Position = UDim2.new(0.5, 0, 0.5, 0)
+				else
+					Card.Position = SavedCardPosition
+				end
+
+				Card.Size = UDim2.new(0, CARD_WIDTH, 0, 0)
+
+				Tween(
+					Card,
+					{
+						Size = SavedCardSize
+					},
+					0.25
+				)
+			else
+				SavedCardPosition = Card.Position
+
+				Tween(
+					Card,
+					{
+						Size = UDim2.new(0, CARD_WIDTH, 0, 0)
+					},
+					0.2
+				)
+
+				task.delay(0.2, function()
+					if not CardOpen then
+						Card.Visible = false
+					end
+				end)
+			end
+		end
+
+		LogoDragging = false
+	end
+end)
+
+--==================================================
+-- WINDOW CONTROLS
+--==================================================
+
+MinimizeButton.MouseButton1Click:Connect(function()
+	if Minimized then
+		Minimized = false
+
+		Sidebar.Visible = true
+		Content.Visible = true
+
+		Tween(
+			Card,
+			{
+				Size = SavedCardSize
+			},
+			0.25
+		)
+	else
+		Minimized = true
+
+		SavedCardSize = Card.Size
+
+		Tween(
+			Card,
+			{
+				Size = UDim2.new(0, CARD_WIDTH, 0, MIN_HEIGHT)
+			},
+			0.25
+		)
+
+		task.delay(0.2, function()
+			if Minimized then
+				Sidebar.Visible = false
+				Content.Visible = false
+			end
+		end)
+	end
+end)
+
+MaximizeButton.MouseButton1Click:Connect(function()
+	if not Maximized then
+		Maximized = true
+
+		SavedCardPosition = Card.Position
+		SavedCardSize = Card.Size
+
+		Tween(
+			Card,
+			{
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Size = UDim2.new(0, 720, 0, 520)
+			},
+			0.25
+		)
+	else
+		Maximized = false
+
+		Tween(
+			Card,
+			{
+				Position = SavedCardPosition,
+				Size = SavedCardSize
+			},
+			0.25
+		)
+	end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+	CardOpen = false
+
+	SavedCardPosition = Card.Position
+	HasCustomCardPosition = true
+
+	Tween(
+		Card,
+		{
+			Size = UDim2.new(0, CARD_WIDTH, 0, 0)
+		},
+		0.2
+	)
+
+	task.delay(0.2, function()
+		if not CardOpen then
+			Card.Visible = false
+		end
+	end)
+end)
+
+--==================================================
+-- FLOATING LOGO HOVER
+--==================================================
+
+Floating.MouseEnter:Connect(function()
+	Tween(
+		FloatingScale,
+		{
+			Scale = 1.08
+		},
+		0.15
+	)
+
+	Tween(
+		FloatingStroke,
+		{
+			Thickness = 3
+		},
+		0.15
+	)
+end)
+
+Floating.MouseLeave:Connect(function()
+	Tween(
+		FloatingScale,
+		{
+			Scale = 1
+		},
+		0.15
+	)
+
+	Tween(
+		FloatingStroke,
+		{
+			Thickness = 2
+		},
+		0.15
+	)
+end)
+
+--==================================================
+-- FINAL SETUP
+--==================================================
+
+RefreshAccent()
+SwitchPage("MAIN")
+
+task.wait(0.4)
+
+Notify("Control panel ready")
