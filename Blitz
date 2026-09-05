@@ -404,13 +404,17 @@ Content.Position = UDim2.new(0, 10, 0, 52)
 Content.Parent = MainFrame
 
 -- Sidebar
-local Sidebar = Instance.new("Frame")
+local Sidebar = Instance.new("ScrollingFrame")
 Sidebar.Name = "Sidebar"
 Sidebar.BackgroundColor3 = SIDEBAR_COLOR
 Sidebar.BorderSizePixel = 1
 Sidebar.BorderColor3 = ACCENT_COLOR
 Sidebar.Size = UDim2.new(0, 130, 1, 0)
 Sidebar.Position = UDim2.new(0, 0, 0, 0)
+Sidebar.ScrollBarThickness = 2
+Sidebar.ScrollBarImageColor3 = SUBTEXT_COLOR
+Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 Sidebar.Parent = Content
 
 local SidebarCorner = Instance.new("UICorner")
@@ -1394,6 +1398,165 @@ SettingsInfo.TextXAlignment = Enum.TextXAlignment.Left
 SettingsInfo.TextYAlignment = Enum.TextYAlignment.Top
 SettingsInfo.Parent = SettingsPage
 
+local function createCategoryPage(name, description, entries)
+    local page = Instance.new("Frame")
+    page.Name = name .. "Page"
+    page.BackgroundTransparency = 1
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Visible = false
+    page.Parent = TabContainer
+
+    local pageScroll = Instance.new("ScrollingFrame")
+    pageScroll.Name = "ScrollFrame"
+    pageScroll.BackgroundTransparency = 1
+    pageScroll.BorderSizePixel = 0
+    pageScroll.Size = UDim2.new(1, 0, 1, 0)
+    pageScroll.ScrollBarThickness = 2
+    pageScroll.ScrollBarImageColor3 = SUBTEXT_COLOR
+    pageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    pageScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    pageScroll.Parent = page
+
+    local pagePadding = Instance.new("UIPadding")
+    pagePadding.PaddingTop = UDim.new(0, 10)
+    pagePadding.PaddingLeft = UDim.new(0, 10)
+    pagePadding.PaddingRight = UDim.new(0, 10)
+    pagePadding.PaddingBottom = UDim.new(0, 10)
+    pagePadding.Parent = pageScroll
+
+    local pageLayout = Instance.new("UIListLayout")
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.Padding = UDim.new(0, 8)
+    pageLayout.Parent = pageScroll
+
+    local pageTitle = Instance.new("TextLabel")
+    pageTitle.Name = "PageTitle"
+    pageTitle.BackgroundTransparency = 1
+    pageTitle.Text = name
+    pageTitle.TextColor3 = TEXT_COLOR
+    pageTitle.Font = Enum.Font.GothamBold
+    pageTitle.TextSize = 18
+    pageTitle.Size = UDim2.new(1, 0, 0, 24)
+    pageTitle.TextXAlignment = Enum.TextXAlignment.Left
+    pageTitle.Parent = pageScroll
+
+    local pageDescription = Instance.new("TextLabel")
+    pageDescription.Name = "PageDescription"
+    pageDescription.BackgroundTransparency = 1
+    pageDescription.Text = description
+    pageDescription.TextColor3 = SUBTEXT_COLOR
+    pageDescription.Font = Enum.Font.Gotham
+    pageDescription.TextSize = 12
+    pageDescription.TextWrapped = true
+    pageDescription.Size = UDim2.new(1, 0, 0, 30)
+    pageDescription.TextXAlignment = Enum.TextXAlignment.Left
+    pageDescription.Parent = pageScroll
+
+    for index, entry in ipairs(entries) do
+        local row = Instance.new("Frame")
+        row.Name = entry.Title
+        row.BackgroundColor3 = CARD_COLOR
+        row.BorderSizePixel = 1
+        row.BorderColor3 = ACCENT_COLOR
+        row.Size = UDim2.new(1, 0, 0, 58)
+        row.LayoutOrder = index
+        row.Parent = pageScroll
+
+        local rowCorner = Instance.new("UICorner")
+        rowCorner.CornerRadius = UDim.new(0, 6)
+        rowCorner.Parent = row
+        addStroke(row, Color3.fromRGB(48, 59, 76), 1, 0.35)
+
+        local rowTitle = Instance.new("TextLabel")
+        rowTitle.BackgroundTransparency = 1
+        rowTitle.Text = entry.Title
+        rowTitle.TextColor3 = TEXT_COLOR
+        rowTitle.Font = Enum.Font.GothamSemibold
+        rowTitle.TextSize = 13
+        rowTitle.Size = UDim2.new(1, -190, 1, 0)
+        rowTitle.Position = UDim2.new(0, 10, 0, 0)
+        rowTitle.TextXAlignment = Enum.TextXAlignment.Left
+        rowTitle.Parent = row
+
+        local control
+        if entry.Type == "dropdown" then
+            control = createDropdown(entry.Value, entry.Options, function(value)
+                addLog(name .. ": " .. entry.Title .. " = " .. tostring(value), "success")
+            end)
+            control.Position = UDim2.new(1, -175, 0.5, -16)
+            control.Size = UDim2.new(0, 160, 0, 32)
+        else
+            control = createToggle(false, TOGGLE_ON, TOGGLE_OFF, function(state)
+                addLog(
+                    name .. ": " .. entry.Title .. (state and " enabled" or " disabled"),
+                    state and "success" or "info"
+                )
+            end)
+            control.Position = UDim2.new(1, -60, 0, 19)
+        end
+
+        control.Parent = row
+    end
+
+    return page
+end
+
+local CategoryPages = {
+    Setting = SettingsPage,
+    Farming = MainPage,
+    Fishing = createCategoryPage("Fishing", "Fishing tools and automation", {
+        {Title = "Auto Fishing", Type = "toggle"},
+        {Title = "Select Rod", Type = "dropdown", Value = "Fishing Rod", Options = {"Fishing Rod", "Pro Fishing Rod"}},
+        {Title = "Select Bait", Type = "dropdown", Value = "Basic Bait", Options = {"Basic Bait", "Fine Bait"}}
+    }),
+    Quest = createCategoryPage("Quest", "Quest tracking and completion tools", {
+        {Title = "Auto Quest", Type = "toggle"},
+        {Title = "Quest Mode", Type = "dropdown", Value = "Main Quest", Options = {"Main Quest", "Daily Quest", "Event Quest"}}
+    }),
+    Items = createCategoryPage("Items", "Item collection and inventory tools", {
+        {Title = "Auto Collect Items", Type = "toggle"},
+        {Title = "Item Filter", Type = "dropdown", Value = "All Items", Options = {"All Items", "Rare Items", "Materials"}}
+    }),
+    ["Sea Events"] = createCategoryPage("Sea Events", "Sea event detection and farming", {
+        {Title = "Auto Sea Events", Type = "toggle"},
+        {Title = "Event Target", Type = "dropdown", Value = "Any Event", Options = {"Any Event", "Sea Beast", "Ship Raid"}}
+    }),
+    ["Race Callout"] = createCategoryPage("Race Callout", "Race abilities and callout controls", {
+        {Title = "Auto Race Ability", Type = "toggle"},
+        {Title = "Race Priority", Type = "dropdown", Value = "Awaken First", Options = {"Awaken First", "Save Energy"}}
+    }),
+    Islands = createCategoryPage("Islands", "Island travel and discovery tools", {
+        {Title = "Auto Discover Islands", Type = "toggle"},
+        {Title = "Island Target", Type = "dropdown", Value = "Nearest Island", Options = {"Nearest Island", "Quest Island", "Event Island"}}
+    }),
+    Events = createCategoryPage("Events", "Limited-time event controls", {
+        {Title = "Auto Event Rewards", Type = "toggle"},
+        {Title = "Event Mode", Type = "dropdown", Value = "Active Events", Options = {"Active Events", "Rewards Only"}}
+    }),
+    ["Stats and Esp"] = createCategoryPage("Stats and Esp", "Player information and visual overlays", {
+        {Title = "Player ESP", Type = "toggle"},
+        {Title = "ESP Display", Type = "dropdown", Value = "Names and Distance", Options = {"Names and Distance", "Names Only", "Distance Only"}}
+    }),
+    ["Fruits and Raids"] = createCategoryPage("Fruits and Raids", "Fruit collection and raid controls", {
+        {Title = "Auto Collect Fruits", Type = "toggle"},
+        {Title = "Auto Raids", Type = "toggle"},
+        {Title = "Raid Type", Type = "dropdown", Value = "Any Raid", Options = {"Any Raid", "Normal Raid", "Advanced Raid"}}
+    }),
+    ["Local Player"] = createCategoryPage("Local Player", "Movement and local character controls", {
+        {Title = "Walk Speed", Type = "dropdown", Value = "Default", Options = {"Default", "Fast", "Very Fast"}},
+        {Title = "Anti AFK", Type = "toggle"}
+    }),
+    Teleport = createCategoryPage("Teleport", "Quick travel destinations", {
+        {Title = "Teleport to Island", Type = "dropdown", Value = "Select Island", Options = {"Select Island", "First Sea", "Second Sea", "Third Sea"}},
+        {Title = "Teleport to Player", Type = "dropdown", Value = "Select Player", Options = {"Select Player", "Nearest Player"}}
+    }),
+    Miscellaneous = createCategoryPage("Miscellaneous", "Additional utilities and preferences", {
+        {Title = "Auto Rejoin", Type = "toggle"},
+        {Title = "UI Notifications", Type = "toggle"},
+        {Title = "Notification Style", Type = "dropdown", Value = "Compact", Options = {"Compact", "Detailed"}}
+    })
+}
+
 -- ==========================================
 -- TABS
 -- ==========================================
@@ -1405,7 +1568,7 @@ local function createTabButton(name, layoutOrder, pageFrame)
 
     btn.Name = name .. "Tab"
     btn.BackgroundColor3 =
-        layoutOrder == 1
+        pageFrame.Visible
         and BUTTON_ACTIVE
         or BUTTON_INACTIVE
 
@@ -1415,7 +1578,7 @@ local function createTabButton(name, layoutOrder, pageFrame)
     btn.LayoutOrder = layoutOrder
     btn.Text = name
     btn.TextColor3 =
-        layoutOrder == 1
+        pageFrame.Visible
         and TEXT_COLOR
         or SUBTEXT_COLOR
 
@@ -1470,17 +1633,26 @@ local function createTabButton(name, layoutOrder, pageFrame)
     return btn
 end
 
-createTabButton(
-    "Farm",
-    1,
-    MainPage
-)
+local tabNames = {
+    "Setting",
+    "Farming",
+    "Fishing",
+    "Quest",
+    "Items",
+    "Sea Events",
+    "Race Callout",
+    "Islands",
+    "Events",
+    "Stats and Esp",
+    "Fruits and Raids",
+    "Local Player",
+    "Teleport",
+    "Miscellaneous"
+}
 
-createTabButton(
-    "Settings",
-    2,
-    SettingsPage
-)
+for layoutOrder, tabName in ipairs(tabNames) do
+    createTabButton(tabName, layoutOrder, CategoryPages[tabName])
+end
 
 -- ==========================================
 -- DRAGGABLE UTILITY
