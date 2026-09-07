@@ -1,1763 +1,3322 @@
--- Configuration (Full Pitch-Black Theme)
-local UI_COLOR = Color3.fromRGB(15, 18, 24)
-local HEADER_COLOR = Color3.fromRGB(24, 29, 38)
-local SIDEBAR_COLOR = Color3.fromRGB(18, 22, 29)
-local CARD_COLOR = Color3.fromRGB(25, 30, 39)
-local TEXT_COLOR = Color3.fromRGB(244, 247, 252)
-local SUBTEXT_COLOR = Color3.fromRGB(157, 168, 184)
-local ACCENT_COLOR = Color3.fromRGB(48, 59, 76)
-local BUTTON_ACTIVE = Color3.fromRGB(39, 50, 65)
-local BUTTON_INACTIVE = Color3.fromRGB(29, 35, 45)
-local LOGO_COLOR = Color3.fromRGB(20, 25, 33)
-local CLOSE_HOVER = Color3.fromRGB(180, 40, 40)
-local CONTROL_HOVER = Color3.fromRGB(52, 65, 84)
-local TOGGLE_ON = Color3.fromRGB(56, 132, 218)
-local TOGGLE_OFF = Color3.fromRGB(36, 43, 54)
-
--- Services
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-
-local LocalPlayer = Players.LocalPlayer
-
--- Multi-fallback UI parent container
-local TargetParent
-
-if gethui then
-    local success, result = pcall(function()
-        return gethui()
-    end)
-
-    if success and result then
-        TargetParent = result
-    end
-end
-
-if not TargetParent then
-    TargetParent = game:GetService("CoreGui")
-end
-
-if not TargetParent and LocalPlayer then
-    TargetParent = LocalPlayer:WaitForChild("PlayerGui")
-end
-
--- Clean up previous instance
-local oldUI = TargetParent:FindFirstChild("BlackUI")
-
-if oldUI then
-    oldUI:Destroy()
-end
-
--- Create ScreenGui
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BlackUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder = 20
-ScreenGui.Parent = TargetParent
-
-local function addStroke(parent, color, thickness, transparency)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = color
-    stroke.Thickness = thickness or 1
-    stroke.Transparency = transparency or 0
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = parent
-    return stroke
-end
-
-local function playTween(instance, duration, properties)
-    local tween = TweenService:Create(
-        instance,
-        TweenInfo.new(duration, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-        properties
-    )
-    tween:Play()
-    return tween
-end
-
--- ==========================================
--- DRAGGABLE ICON (LOGO) - TOP RIGHT
--- ==========================================
-
-local Logo = Instance.new("TextButton")
-Logo.Name = "Logo"
-Logo.BackgroundColor3 = LOGO_COLOR
-Logo.BorderSizePixel = 1
-Logo.BorderColor3 = ACCENT_COLOR
-Logo.Size = UDim2.new(0, 46, 0, 46)
-Logo.Position = UDim2.new(0, 10, 0, 60)
-Logo.Text = "X"
-Logo.TextColor3 = TEXT_COLOR
-Logo.Font = Enum.Font.GothamBold
-Logo.TextSize = 20
-Logo.AutoButtonColor = false
-Logo.Parent = ScreenGui
-
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.CornerRadius = UDim.new(0, 8)
-LogoCorner.Parent = Logo
-
--- ==========================================
--- ACTIVITY LOG - TOP RIGHT
--- ==========================================
-
-local ActivityBox = Instance.new("Frame")
-ActivityBox.Name = "ActivityBox"
-ActivityBox.BackgroundColor3 = CARD_COLOR
-ActivityBox.BorderSizePixel = 1
-ActivityBox.BorderColor3 = ACCENT_COLOR
-ActivityBox.Size = UDim2.new(0, 240, 0, 290)
-ActivityBox.Position = UDim2.new(1, -250, 0, 60)
-ActivityBox.Parent = ScreenGui
-addStroke(ActivityBox, Color3.fromRGB(67, 82, 105), 1, 0.15)
-
-local ActivitySizeConstraint = Instance.new("UISizeConstraint")
-ActivitySizeConstraint.MinSize = Vector2.new(210, 250)
-ActivitySizeConstraint.MaxSize = Vector2.new(300, 380)
-ActivitySizeConstraint.Parent = ActivityBox
-
-local ActivityCorner = Instance.new("UICorner")
-ActivityCorner.CornerRadius = UDim.new(0, 8)
-ActivityCorner.Parent = ActivityBox
-
-local ActivityTitle = Instance.new("TextLabel")
-ActivityTitle.Name = "ActivityTitle"
-ActivityTitle.BackgroundTransparency = 1
-ActivityTitle.Text = "Live Logs"
-ActivityTitle.TextColor3 = TEXT_COLOR
-ActivityTitle.Font = Enum.Font.GothamBold
-ActivityTitle.TextSize = 15
-ActivityTitle.Size = UDim2.new(1, -70, 0, 22)
-ActivityTitle.Position = UDim2.new(0, 12, 0, 10)
-ActivityTitle.TextXAlignment = Enum.TextXAlignment.Left
-ActivityTitle.Parent = ActivityBox
-
-local ActivityStatus = Instance.new("TextLabel")
-ActivityStatus.Name = "ActivityStatus"
-ActivityStatus.BackgroundColor3 = TOGGLE_ON
-ActivityStatus.Text = "LIVE"
-ActivityStatus.TextColor3 = TEXT_COLOR
-ActivityStatus.Font = Enum.Font.GothamBold
-ActivityStatus.TextSize = 9
-ActivityStatus.Size = UDim2.new(0, 38, 0, 18)
-ActivityStatus.Position = UDim2.new(1, -50, 0, 12)
-ActivityStatus.TextXAlignment = Enum.TextXAlignment.Center
-ActivityStatus.Parent = ActivityBox
-
-local ActivityStatusCorner = Instance.new("UICorner")
-ActivityStatusCorner.CornerRadius = UDim.new(0, 4)
-ActivityStatusCorner.Parent = ActivityStatus
-
-local ActivitySubtitle = Instance.new("TextLabel")
-ActivitySubtitle.Name = "ActivitySubtitle"
-ActivitySubtitle.BackgroundTransparency = 1
-ActivitySubtitle.Text = "Main UI notifications"
-ActivitySubtitle.TextColor3 = SUBTEXT_COLOR
-ActivitySubtitle.Font = Enum.Font.Gotham
-ActivitySubtitle.TextSize = 12
-ActivitySubtitle.Size = UDim2.new(1, -24, 0, 18)
-ActivitySubtitle.Position = UDim2.new(0, 12, 0, 34)
-ActivitySubtitle.TextXAlignment = Enum.TextXAlignment.Left
-ActivitySubtitle.Parent = ActivityBox
-
-local ActivityList = Instance.new("ScrollingFrame")
-ActivityList.Name = "ActivityList"
-ActivityList.BackgroundTransparency = 1
-ActivityList.BorderSizePixel = 0
-ActivityList.Size = UDim2.new(1, -24, 1, -66)
-ActivityList.Position = UDim2.new(0, 12, 0, 58)
-ActivityList.ScrollBarThickness = 2
-ActivityList.ScrollBarImageColor3 = SUBTEXT_COLOR
-ActivityList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ActivityList.CanvasSize = UDim2.new(0, 0, 0, 0)
-ActivityList.Parent = ActivityBox
-
-local ActivityLayout = Instance.new("UIListLayout")
-ActivityLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ActivityLayout.Padding = UDim.new(0, 6)
-ActivityLayout.Parent = ActivityList
-
-local ActivityPadding = Instance.new("UIPadding")
-ActivityPadding.PaddingBottom = UDim.new(0, 6)
-ActivityPadding.Parent = ActivityList
-
-local logCount = 0
-
-local function addLog(message, level)
-    local colors = {
-        info = SUBTEXT_COLOR,
-        success = TOGGLE_ON,
-        warning = Color3.fromRGB(235, 174, 72)
-    }
-
-    local entry = Instance.new("Frame")
-    entry.Name = "LogEntry"
-    entry.BackgroundColor3 = BUTTON_INACTIVE
-    entry.BackgroundTransparency = 1
-    entry.BorderSizePixel = 0
-    entry.Size = UDim2.new(1, -2, 0, 42)
-    logCount = logCount + 1
-    entry.LayoutOrder = -logCount
-    entry.Parent = ActivityList
-    playTween(entry, 0.22, {BackgroundTransparency = 0})
-
-    local entryCorner = Instance.new("UICorner")
-    entryCorner.CornerRadius = UDim.new(0, 4)
-    entryCorner.Parent = entry
-
-    local marker = Instance.new("Frame")
-    marker.BackgroundColor3 = colors[level] or colors.info
-    marker.BorderSizePixel = 0
-    marker.Size = UDim2.new(0, 3, 1, -12)
-    marker.Position = UDim2.new(0, 6, 0, 6)
-    marker.Parent = entry
-
-    local timestamp = Instance.new("TextLabel")
-    timestamp.BackgroundTransparency = 1
-    timestamp.Text = os.date("%H:%M:%S")
-    timestamp.TextColor3 = SUBTEXT_COLOR
-    timestamp.Font = Enum.Font.Code
-    timestamp.TextSize = 10
-    timestamp.Size = UDim2.new(0, 48, 0, 16)
-    timestamp.Position = UDim2.new(0, 16, 0, 5)
-    timestamp.TextXAlignment = Enum.TextXAlignment.Left
-    timestamp.Parent = entry
-
-    local messageLabel = Instance.new("TextLabel")
-    messageLabel.BackgroundTransparency = 1
-    messageLabel.Text = tostring(message)
-    messageLabel.TextColor3 = TEXT_COLOR
-    messageLabel.Font = Enum.Font.GothamMedium
-    messageLabel.TextSize = 11
-    messageLabel.Size = UDim2.new(1, -72, 0, 18)
-    messageLabel.Position = UDim2.new(0, 16, 0, 19)
-    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    messageLabel.TextTruncate = Enum.TextTruncate.AtEnd
-    messageLabel.Parent = entry
-
-    ActivityList.CanvasPosition = Vector2.new(0, ActivityLayout.AbsoluteContentSize.Y)
-end
-
-addLog("Interface initialized", "success")
-
--- ==========================================
--- MAIN WINDOW - CENTERED
--- ==========================================
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.BackgroundColor3 = UI_COLOR
-MainFrame.BorderSizePixel = 1
-MainFrame.BorderColor3 = ACCENT_COLOR
-MainFrame.Size = UDim2.new(0, 700, 0, 520)
-MainFrame.Position = UDim2.new(0.5, -350, 0.5, -260)
-MainFrame.Visible = true
-MainFrame.Parent = ScreenGui
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 8)
-MainCorner.Parent = MainFrame
-addStroke(MainFrame, Color3.fromRGB(67, 82, 105), 1, 0.1)
-
-local MainSizeConstraint = Instance.new("UISizeConstraint")
-MainSizeConstraint.MinSize = Vector2.new(520, 390)
-MainSizeConstraint.MaxSize = Vector2.new(920, 680)
-MainSizeConstraint.Parent = MainFrame
-
--- ==========================================
--- HEADER
--- ==========================================
-
-local Header = Instance.new("Frame")
-Header.Name = "Header"
-Header.BackgroundColor3 = HEADER_COLOR
-Header.BorderSizePixel = 0
-Header.Size = UDim2.new(1, 0, 0, 48)
-Header.Position = UDim2.new(0, 0, 0, 0)
-Header.Parent = MainFrame
-
-local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 8)
-HeaderCorner.Parent = Header
-
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.BackgroundTransparency = 1
-Title.Text = "Xeno UI"
-Title.TextColor3 = TEXT_COLOR
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 17
-Title.Size = UDim2.new(1, -150, 0, 23)
-Title.Position = UDim2.new(0, 16, 0, 5)
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Header
-
-local HeaderSubtitle = Instance.new("TextLabel")
-HeaderSubtitle.Name = "HeaderSubtitle"
-HeaderSubtitle.BackgroundTransparency = 1
-HeaderSubtitle.Text = "CONTROL CENTER  /  FARM AUTOMATION"
-HeaderSubtitle.TextColor3 = SUBTEXT_COLOR
-HeaderSubtitle.Font = Enum.Font.GothamMedium
-HeaderSubtitle.TextSize = 9
-HeaderSubtitle.Size = UDim2.new(1, -150, 0, 14)
-HeaderSubtitle.Position = UDim2.new(0, 17, 0, 28)
-HeaderSubtitle.TextXAlignment = Enum.TextXAlignment.Left
-HeaderSubtitle.Parent = Header
-
-local HeaderAccent = Instance.new("Frame")
-HeaderAccent.Name = "HeaderAccent"
-HeaderAccent.BackgroundColor3 = TOGGLE_ON
-HeaderAccent.BorderSizePixel = 0
-HeaderAccent.Size = UDim2.new(0, 52, 0, 2)
-HeaderAccent.Position = UDim2.new(0, 16, 1, -2)
-HeaderAccent.Parent = Header
-
-local ControlsContainer = Instance.new("Frame")
-ControlsContainer.Name = "ControlsContainer"
-ControlsContainer.BackgroundTransparency = 1
-ControlsContainer.Size = UDim2.new(0, 110, 1, 0)
-ControlsContainer.Position = UDim2.new(1, -115, 0, 0)
-ControlsContainer.Parent = Header
-
-local ControlsLayout = Instance.new("UIListLayout")
-ControlsLayout.Parent = ControlsContainer
-ControlsLayout.FillDirection = Enum.FillDirection.Horizontal
-ControlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-ControlsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-ControlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ControlsLayout.Padding = UDim.new(0, 4)
-
--- ==========================================
--- HEADER CONTROL FUNCTION
--- ==========================================
-
-local function createHeaderControl(symbol, order, hoverColor, onClick)
-    local btn = Instance.new("TextButton")
-
-    btn.Name = "Control_" .. symbol
-    btn.BackgroundTransparency = 1
-    btn.BackgroundColor3 = hoverColor or CONTROL_HOVER
-    btn.BorderSizePixel = 0
-    btn.Size = UDim2.new(0, 32, 0, 30)
-    btn.LayoutOrder = order
-    btn.Text = symbol
-    btn.TextColor3 = TEXT_COLOR
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
-    btn.AutoButtonColor = false
-    btn.Parent = ControlsContainer
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 4)
-    btnCorner.Parent = btn
-
-    btn.MouseEnter:Connect(function()
-        playTween(btn, 0.16, {BackgroundTransparency = 0})
-    end)
-
-    btn.MouseLeave:Connect(function()
-        playTween(btn, 0.22, {BackgroundTransparency = 1})
-    end)
-
-    btn.MouseButton1Click:Connect(onClick)
-
-    return btn
-end
-
--- Minimize
-createHeaderControl("-", 1, CONTROL_HOVER, function()
-    MainFrame.Visible = false
-end)
-
--- Maximize
-local isMaximized = false
-
-createHeaderControl("[]", 2, CONTROL_HOVER, function()
-    isMaximized = not isMaximized
-
-    if isMaximized then
-        MainFrame.Size = UDim2.new(0, 900, 0, 650)
-        MainFrame.Position = UDim2.new(0.5, -450, 0.5, -325)
-    else
-        MainFrame.Size = UDim2.new(0, 700, 0, 520)
-        MainFrame.Position = UDim2.new(0.5, -350, 0.5, -260)
-    end
-end)
-
--- Close
-createHeaderControl("X", 3, CLOSE_HOVER, function()
-    ScreenGui:Destroy()
-end)
-
--- ==========================================
--- CONTENT AREA & SIDEBAR
--- ==========================================
-
-local Content = Instance.new("Frame")
-Content.Name = "Content"
-Content.BackgroundColor3 = UI_COLOR
-Content.BorderSizePixel = 0
-Content.Size = UDim2.new(1, -20, 1, -58)
-Content.Position = UDim2.new(0, 10, 0, 52)
-Content.Parent = MainFrame
-
--- Sidebar
-local Sidebar = Instance.new("ScrollingFrame")
-Sidebar.Name = "Sidebar"
-Sidebar.BackgroundColor3 = SIDEBAR_COLOR
-Sidebar.BorderSizePixel = 1
-Sidebar.BorderColor3 = ACCENT_COLOR
-Sidebar.Size = UDim2.new(0, 130, 1, 0)
-Sidebar.Position = UDim2.new(0, 0, 0, 0)
-Sidebar.ScrollBarThickness = 2
-Sidebar.ScrollBarImageColor3 = SUBTEXT_COLOR
-Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
-Sidebar.Parent = Content
-
-local SidebarCorner = Instance.new("UICorner")
-SidebarCorner.CornerRadius = UDim.new(0, 6)
-SidebarCorner.Parent = Sidebar
-addStroke(Sidebar, Color3.fromRGB(55, 68, 88), 1, 0.25)
-
-local SidebarList = Instance.new("UIListLayout")
-SidebarList.Parent = Sidebar
-SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
-SidebarList.Padding = UDim.new(0, 6)
-
-local SidebarPadding = Instance.new("UIPadding")
-SidebarPadding.Parent = Sidebar
-SidebarPadding.PaddingTop = UDim.new(0, 8)
-SidebarPadding.PaddingLeft = UDim.new(0, 8)
-SidebarPadding.PaddingRight = UDim.new(0, 8)
-
-local SidebarLabel = Instance.new("TextLabel")
-SidebarLabel.Name = "SidebarLabel"
-SidebarLabel.BackgroundTransparency = 1
-SidebarLabel.Text = "SECTIONS"
-SidebarLabel.TextColor3 = SUBTEXT_COLOR
-SidebarLabel.Font = Enum.Font.GothamBold
-SidebarLabel.TextSize = 9
-SidebarLabel.Size = UDim2.new(1, 0, 0, 18)
-SidebarLabel.LayoutOrder = 0
-SidebarLabel.TextXAlignment = Enum.TextXAlignment.Left
-SidebarLabel.Parent = Sidebar
-
--- Tab Container
-local TabContainer = Instance.new("Frame")
-TabContainer.Name = "TabContainer"
-TabContainer.BackgroundTransparency = 1
-TabContainer.Size = UDim2.new(1, -140, 1, 0)
-TabContainer.Position = UDim2.new(0, 140, 0, 0)
-TabContainer.Parent = Content
-
--- ==========================================
--- FARM PAGE
--- ==========================================
-
-local MainPage = Instance.new("Frame")
-MainPage.Name = "MainPage"
-MainPage.BackgroundTransparency = 1
-MainPage.Size = UDim2.new(1, 0, 1, 0)
-MainPage.Visible = true
-MainPage.Parent = TabContainer
-
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Name = "ScrollFrame"
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.BorderSizePixel = 0
-ScrollFrame.Size = UDim2.new(1, 0, 1, 0)
-ScrollFrame.ScrollBarThickness = 2
-ScrollFrame.ScrollBarImageColor3 = SUBTEXT_COLOR
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ScrollFrame.Parent = MainPage
-
-local ContentLayout = Instance.new("UIListLayout")
-ContentLayout.Parent = ScrollFrame
-ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ContentLayout.Padding = UDim.new(0, 8)
-
-local ScrollPadding = Instance.new("UIPadding")
-ScrollPadding.Parent = ScrollFrame
-ScrollPadding.PaddingTop = UDim.new(0, 10)
-ScrollPadding.PaddingLeft = UDim.new(0, 10)
-ScrollPadding.PaddingRight = UDim.new(0, 10)
-ScrollPadding.PaddingBottom = UDim.new(0, 10)
-
--- ==========================================
--- OPTION ROW
--- ==========================================
-
-local function createOptionRow(title, controlFrame)
-    local row = Instance.new("Frame")
-
-    row.Name = title
-    row.BackgroundColor3 = CARD_COLOR
-    row.BorderSizePixel = 1
-    row.BorderColor3 = ACCENT_COLOR
-    row.Size = UDim2.new(1, 0, 0, 58)
-    row.Parent = ScrollFrame
-
-    local rowCorner = Instance.new("UICorner")
-    rowCorner.CornerRadius = UDim.new(0, 6)
-    rowCorner.Parent = row
-    local rowStroke = addStroke(row, Color3.fromRGB(48, 59, 76), 1, 0.35)
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Name = "Title"
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = title
-    textLabel.TextColor3 = TEXT_COLOR
-    textLabel.Font = Enum.Font.GothamSemibold
-    textLabel.TextSize = 14
-    textLabel.Size = UDim2.new(1, -190, 1, 0)
-    textLabel.Position = UDim2.new(0, 10, 0, 0)
-    textLabel.TextXAlignment = Enum.TextXAlignment.Left
-    textLabel.Parent = row
-
-    row.MouseEnter:Connect(function()
-        playTween(row, 0.16, {BackgroundColor3 = Color3.fromRGB(30, 37, 48)})
-        playTween(rowStroke, 0.16, {Transparency = 0.05})
-    end)
-
-    row.MouseLeave:Connect(function()
-        playTween(row, 0.24, {BackgroundColor3 = CARD_COLOR})
-        playTween(rowStroke, 0.24, {Transparency = 0.35})
-    end)
-
-    if controlFrame then
-        controlFrame.Parent = row
-        controlFrame.Position = UDim2.new(1, -120, 0.5, -15)
-        controlFrame.Size = UDim2.new(0, 100, 0, 30)
-    end
-
-    return row
-end
-
--- ==========================================
--- TOGGLE SWITCH
--- ==========================================
-
-local function createToggle(initialState, onColor, offColor, onChanged)
-    local toggle = Instance.new("TextButton")
-
-    toggle.Name = "Toggle"
-    toggle.BackgroundColor3 = initialState and onColor or offColor
-    toggle.BorderSizePixel = 0
-    toggle.Size = UDim2.new(0, 50, 0, 20)
-    toggle.AutoButtonColor = false
-    toggle.Text = ""
-
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 10)
-    toggleCorner.Parent = toggle
-
-    local knob = Instance.new("Frame")
-    knob.Name = "Knob"
-    knob.BackgroundColor3 = TEXT_COLOR
-    knob.BorderSizePixel = 0
-    knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = initialState
-        and UDim2.new(0, 32, 0, 2)
-        or UDim2.new(0, 2, 0, 2)
-    knob.Parent = toggle
-
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(0, 8)
-    knobCorner.Parent = knob
-
-    local currentState = initialState
-
-    toggle.MouseButton1Click:Connect(function()
-        currentState = not currentState
-
-        playTween(toggle, 0.2, {
-            BackgroundColor3 = currentState and onColor or offColor
-        })
-
-        playTween(knob, 0.2, {
-            Position = currentState
-                and UDim2.new(0, 32, 0, 2)
-                or UDim2.new(0, 2, 0, 2)
-        })
-
-        if onChanged then
-            onChanged(currentState)
-        end
-    end)
-
-    return toggle
-end
-
--- ==========================================
--- DROPDOWN
--- ==========================================
-
-local function createDropdown(title, options, onChange)
-    local drop = Instance.new("Frame")
-
-    drop.Name = "Dropdown"
-    drop.BackgroundColor3 = BUTTON_ACTIVE
-    drop.BorderSizePixel = 1
-    drop.BorderColor3 = ACCENT_COLOR
-    drop.Size = UDim2.new(0, 160, 0, 32)
-    drop.ZIndex = 10
-
-    local dropCorner = Instance.new("UICorner")
-    dropCorner.CornerRadius = UDim.new(0, 4)
-    dropCorner.Parent = drop
-    addStroke(drop, Color3.fromRGB(84, 105, 135), 1, 0.2)
-
-    local dropText = Instance.new("TextLabel")
-    dropText.Name = "Text"
-    dropText.BackgroundTransparency = 1
-    dropText.Text = title
-    dropText.TextColor3 = TEXT_COLOR
-    dropText.Font = Enum.Font.GothamMedium
-    dropText.TextSize = 13
-    dropText.Size = UDim2.new(1, -35, 1, 0)
-    dropText.Position = UDim2.new(0, 10, 0, 0)
-    dropText.TextXAlignment = Enum.TextXAlignment.Left
-    dropText.Parent = drop
-
-    local arrow = Instance.new("TextLabel")
-    arrow.Name = "Arrow"
-    arrow.BackgroundTransparency = 1
-    arrow.Text = "▼"
-    arrow.TextColor3 = SUBTEXT_COLOR
-    arrow.Font = Enum.Font.GothamBold
-    arrow.TextSize = 10
-    arrow.Size = UDim2.new(0, 20, 1, 0)
-    arrow.Position = UDim2.new(1, -25, 0, 0)
-    arrow.Parent = drop
-
-    local clickBtn = Instance.new("TextButton")
-    clickBtn.Name = "ClickButton"
-    clickBtn.Size = UDim2.new(1, 0, 1, 0)
-    clickBtn.BackgroundTransparency = 1
-    clickBtn.Text = ""
-    clickBtn.AutoButtonColor = false
-    clickBtn.ZIndex = 11
-    clickBtn.Parent = drop
-
-    local menuOpen = false
-    local menu
-
-    clickBtn.MouseButton1Click:Connect(function()
-        menuOpen = not menuOpen
-        playTween(arrow, 0.2, {Rotation = menuOpen and 180 or 0})
-
-        if menuOpen then
-            if menu then
-                menu:Destroy()
-            end
-
-            menu = Instance.new("Frame")
-            menu.Name = "DropdownMenu"
-            menu.BackgroundColor3 = CARD_COLOR
-            menu.BorderSizePixel = 1
-            menu.BorderColor3 = ACCENT_COLOR
-            local menuHeight = math.min(#options * 28, 140)
-            menu.Size = UDim2.new(0, drop.AbsoluteSize.X, 0, 0)
-            menu.Position = UDim2.new(
-                0,
-                drop.AbsolutePosition.X,
-                0,
-                drop.AbsolutePosition.Y + drop.AbsoluteSize.Y + 3
-            )
-            menu.ZIndex = 100
-            menu.Parent = ScreenGui
-
-            local menuCorner = Instance.new("UICorner")
-            menuCorner.CornerRadius = UDim.new(0, 5)
-            menuCorner.Parent = menu
-            addStroke(menu, Color3.fromRGB(84, 105, 135), 1, 0.1)
-            playTween(menu, 0.22, {
-                Size = UDim2.new(0, drop.AbsoluteSize.X, 0, menuHeight)
-            })
-
-            local menuLayout = Instance.new("UIListLayout")
-            menuLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            menuLayout.Parent = menu
-
-            for index, option in ipairs(options) do
-                local optionButton = Instance.new("TextButton")
-
-                optionButton.BackgroundColor3 = BUTTON_INACTIVE
-                optionButton.BorderSizePixel = 0
-                optionButton.Size = UDim2.new(1, 0, 0, 28)
-                optionButton.Text = tostring(option)
-                optionButton.TextColor3 = TEXT_COLOR
-                optionButton.Font = Enum.Font.GothamMedium
-                optionButton.TextSize = 13
-                optionButton.LayoutOrder = index
-                optionButton.ZIndex = 101
-                optionButton.Parent = menu
-
-                optionButton.MouseEnter:Connect(function()
-                    playTween(optionButton, 0.12, {BackgroundColor3 = BUTTON_ACTIVE})
-                end)
-
-                optionButton.MouseLeave:Connect(function()
-                    playTween(optionButton, 0.16, {BackgroundColor3 = BUTTON_INACTIVE})
-                end)
-
-                optionButton.MouseButton1Click:Connect(function()
-                    dropText.Text = tostring(option)
-                    menuOpen = false
-
-                    if menu then
-                        menu:Destroy()
-                        menu = nil
-                    end
-
-                    if onChange then
-                        onChange(option)
-                    end
-                end)
-            end
-        else
-            if menu then
-                menu:Destroy()
-                menu = nil
-            end
-        end
-    end)
-
-    return drop
-end
-
--- ==========================================
--- SLIDER
--- ==========================================
-
-local function createSlider(currentValue, min, max, onChange)
-    local sliderFrame = Instance.new("Frame")
-
-    sliderFrame.Name = "Slider"
-    sliderFrame.BackgroundColor3 = BUTTON_INACTIVE
-    sliderFrame.BorderSizePixel = 0
-    sliderFrame.Size = UDim2.new(1, -20, 0, 20)
-    sliderFrame.Parent = nil
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 4)
-    corner.Parent = sliderFrame
-
-    local fillFrame = Instance.new("Frame")
-    fillFrame.Name = "Fill"
-    fillFrame.BackgroundColor3 = TOGGLE_ON
-    fillFrame.BorderSizePixel = 0
-    fillFrame.Size = UDim2.new(
-        math.clamp((currentValue - min) / (max - min), 0, 1),
-        0,
-        1,
-        0
-    )
-    fillFrame.Parent = sliderFrame
-
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(0, 4)
-    fillCorner.Parent = fillFrame
-
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Name = "Value"
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Text = tostring(currentValue)
-    valueLabel.TextColor3 = TEXT_COLOR
-    valueLabel.Font = Enum.Font.GothamMedium
-    valueLabel.TextSize = 10
-    valueLabel.Size = UDim2.new(0, 30, 0, 20)
-    valueLabel.Position = UDim2.new(1, -30, 0, 0)
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valueLabel.Parent = sliderFrame
-
-    local dragging = false
-
-    local function updateSlider(mouseX)
-        local absolutePosition = sliderFrame.AbsolutePosition.X
-        local absoluteSize = sliderFrame.AbsoluteSize.X
-
-        if absoluteSize <= 0 then
-            return
-        end
-
-        local scale = math.clamp(
-            (mouseX - absolutePosition) / absoluteSize,
-            0,
-            1
-        )
-
-        local value = math.floor(
-            min + scale * (max - min) + 0.5
-        )
-
-        fillFrame.Size = UDim2.new(scale, 0, 1, 0)
-        valueLabel.Text = tostring(value)
-
-        if onChange then
-            onChange(value)
-        end
-    end
-
-    sliderFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            dragging = true
-            updateSlider(input.Position.X)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging then
-            if input.UserInputType == Enum.UserInputType.MouseMovement
-                or input.UserInputType == Enum.UserInputType.Touch then
-
-                updateSlider(input.Position.X)
-            end
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            dragging = false
-        end
-    end)
-
-    return sliderFrame
-end
-
--- ==========================================
--- SECTION HEADER
--- ==========================================
-
-local function createSectionHeader(title)
-    local header = Instance.new("TextLabel")
-
-    header.Name = "SectionHeader"
-    header.BackgroundTransparency = 1
-    header.Text = title
-    header.TextColor3 = TEXT_COLOR
-    header.Font = Enum.Font.GothamBold
-    header.TextSize = 14
-    header.Size = UDim2.new(1, 0, 0, 20)
-    header.TextXAlignment = Enum.TextXAlignment.Left
-    header.Parent = ScrollFrame
-
-    return header
-end
-
--- ==========================================
--- FARM SECTION
--- ==========================================
-
-createSectionHeader("Farm")
-
-local methodRow = createOptionRow("Method Farm", nil)
-
-local methodDropdown = createDropdown(
-    "Melee",
-    {
-        "Melee",
-        "Blox Fruit",
-        "Sword",
-        "Gun"
-    },
-    function(selectedMethod)
-        addLog("Farm method: " .. tostring(selectedMethod), "success")
-    end
-)
-
-methodDropdown.Position = UDim2.new(1, -175, 0.5, -16)
-methodDropdown.Size = UDim2.new(0, 160, 0, 32)
-methodDropdown.Parent = methodRow
-
-local autoFarmRow = createOptionRow("Auto Farm", nil)
-
-local autoFarmToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        addLog(
-            state and "Auto Farm enabled" or "Auto Farm disabled",
-            state and "success" or "info"
-        )
-    end
-)
-
-autoFarmToggle.Parent = autoFarmRow
-autoFarmToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local questRow = createOptionRow("Get Quest Farm", nil)
-
-local questToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Get Quest logic goes here
-    end
-)
-
-questToggle.Parent = questRow
-questToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local buddhaRow = createOptionRow(
-    "Buddha Transform When Farm",
-    nil
-)
-
-local buddhaToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Buddha logic goes here
-    end
-)
-
-buddhaToggle.Parent = buddhaRow
-buddhaToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- MATERIAL SECTION
--- ==========================================
-
-createSectionHeader("Material")
-
-local selectMatRow = createOptionRow("Select Material", nil)
-
-local selectMatDrop = createDropdown(
-    "Scrap Metal",
-    {
-        "Scrap Metal",
-        "Plastic",
-        "Glass"
-    }
-)
-
-selectMatDrop.Position = UDim2.new(1, -175, 0.5, -16)
-selectMatDrop.Size = UDim2.new(0, 160, 0, 32)
-selectMatDrop.Parent = selectMatRow
-
-local farmMatRow = createOptionRow("Farm Material", nil)
-
-local farmMatToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Farm Material logic goes here
-    end
-)
-
-farmMatToggle.Parent = farmMatRow
-farmMatToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- CHEST SECTION
--- ==========================================
-
-createSectionHeader("Chest")
-
-local autoChestRow = createOptionRow("Auto Chest", nil)
-
-local autoChestToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Chest logic goes here
-    end
-)
-
-autoChestToggle.Parent = autoChestRow
-autoChestToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local hopRow = createOptionRow("Auto Chest Hop", nil)
-
-local hopToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Chest Hop logic goes here
-    end
-)
-
-hopToggle.Parent = hopRow
-hopToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local stopRow = createOptionRow(
-    "Stop When Have Item",
-    nil
-)
-
-local stopToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Stop When Have Item logic goes here
-    end
-)
-
-stopToggle.Parent = stopRow
-stopToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- MOB SECTION
--- ==========================================
-
-createSectionHeader("Mob")
-
-local selectMobRow = createOptionRow("Select Mob", nil)
-
-local selectMobDrop = createDropdown(
-    "Pirate Millionaire",
-    {
-        "Pirate Millionaire",
-        "Mystery Man"
-    }
-)
-
-selectMobDrop.Position = UDim2.new(1, -175, 0.5, -16)
-selectMobDrop.Size = UDim2.new(0, 160, 0, 32)
-selectMobDrop.Parent = selectMobRow
-
-local killMobRow = createOptionRow("Kill Mob", nil)
-
-local killMobToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Kill Mob logic goes here
-    end
-)
-
-killMobToggle.Parent = killMobRow
-killMobToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- BOSS SECTION
--- ==========================================
-
-createSectionHeader("Boss")
-
-local selectBossRow = createOptionRow("Select Boss", nil)
-
-local selectBossDrop = createDropdown(
-    "Stone",
-    {
-        "Stone",
-        "Zombie"
-    }
-)
-
-selectBossDrop.Position = UDim2.new(1, -175, 0.5, -16)
-selectBossDrop.Size = UDim2.new(0, 160, 0, 32)
-selectBossDrop.Parent = selectBossRow
-
-local autoKillBossRow = createOptionRow(
-    "Auto Kill Boss",
-    nil
-)
-
-local autoKillBossToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Kill Boss logic goes here
-    end
-)
-
-autoKillBossToggle.Parent = autoKillBossRow
-autoKillBossToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local autoKillAllBossRow = createOptionRow(
-    "Auto Kill All Boss",
-    nil
-)
-
-local autoKillAllBossToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Kill All Boss logic goes here
-    end
-)
-
-autoKillAllBossToggle.Parent = autoKillAllBossRow
-autoKillAllBossToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local hopBossRow = createOptionRow(
-    "Auto Kill All Boss [ Hop Server ]",
-    nil
-)
-
-local hopBossToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Boss Server Hop logic goes here
-    end
-)
-
-hopBossToggle.Parent = hopBossRow
-hopBossToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- FISHING SECTION
--- ==========================================
-
-createSectionHeader("Fishing")
-
-local selectRodRow = createOptionRow(
-    "Select Rod",
-    nil
-)
-
-local selectRodDrop = createDropdown(
-    "Fishing Rod",
-    {
-        "Fishing Rod",
-        "Pro Fishing Rod"
-    }
-)
-
-selectRodDrop.Position = UDim2.new(1, -175, 0.5, -16)
-selectRodDrop.Size = UDim2.new(0, 160, 0, 32)
-selectRodDrop.Parent = selectRodRow
-
-local selectBaitRow = createOptionRow(
-    "Select Bait",
-    nil
-)
-
-local selectBaitDrop = createDropdown(
-    "Basic Bait",
-    {
-        "Basic Bait",
-        "Fine Bait"
-    }
-)
-
-selectBaitDrop.Position = UDim2.new(1, -175, 0.5, -16)
-selectBaitDrop.Size = UDim2.new(0, 160, 0, 32)
-selectBaitDrop.Parent = selectBaitRow
-
-local autoFishRow = createOptionRow(
-    "Auto Fishing",
-    nil
-)
-
-local autoFishToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Fishing logic goes here
-    end
-)
-
-autoFishToggle.Parent = autoFishRow
-autoFishToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- VOLCANO SECTION
--- ==========================================
-
-createSectionHeader("Volcano")
-
-local claimBeltRow = createOptionRow(
-    "Auto Claim Dojo Belt",
-    nil
-)
-
-local claimBeltToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Dojo Belt logic goes here
-    end
-)
-
-claimBeltToggle.Parent = claimBeltRow
-claimBeltToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local claimTalonRow = createOptionRow(
-    "Auto Claim Upgrade Dragon Talon",
-    nil
-)
-
-local claimTalonToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Dragon Talon logic goes here
-    end
-)
-
-claimTalonToggle.Parent = claimTalonRow
-claimTalonToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- BERRY SECTION
--- ==========================================
-
-createSectionHeader("Berry")
-
-local collectBerryRow = createOptionRow(
-    "Auto Collect Berry",
-    nil
-)
-
-local collectBerryToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Berry collection logic goes here
-    end
-)
-
-collectBerryToggle.Parent = collectBerryRow
-collectBerryToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local hopBerryRow = createOptionRow(
-    "Hop Find Berry",
-    nil
-)
-
-local hopBerryToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Berry server hop logic goes here
-    end
-)
-
-hopBerryToggle.Parent = hopBerryRow
-hopBerryToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- MASTERY SECTION
--- ==========================================
-
-createSectionHeader("Mastery")
-
-local selectMethodRow = createOptionRow(
-    "Select Method Mastery",
-    nil
-)
-
-local selectMethodDrop = createDropdown(
-    "Cake",
-    {
-        "Cake",
-        "Training"
-    }
-)
-
-selectMethodDrop.Position = UDim2.new(1, -175, 0.5, -16)
-selectMethodDrop.Size = UDim2.new(0, 160, 0, 32)
-selectMethodDrop.Parent = selectMethodRow
-
-local healthRow = createOptionRow(
-    "Health %",
-    nil
-)
-
-local slider = createSlider(
-    60,
-    0,
-    100,
-    function(value)
-        -- Health percentage logic goes here
-    end
-)
-
-slider.Position = UDim2.new(0, 10, 0.5, -10)
-slider.Size = UDim2.new(1, -20, 0, 20)
-slider.Parent = healthRow
-
-local autoFruitRow = createOptionRow(
-    "Auto Farm Mastery Fruit",
-    nil
-)
-
-local autoFruitToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Farm Mastery Fruit logic goes here
-    end
-)
-
-autoFruitToggle.Parent = autoFruitRow
-autoFruitToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local autoM1Row = createOptionRow(
-    "Auto Farm Mastery Fruits M1",
-    nil
-)
-
-local autoM1Toggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Farm Mastery Fruits M1 logic goes here
-    end
-)
-
-autoM1Toggle.Parent = autoM1Row
-autoM1Toggle.Position = UDim2.new(1, -60, 0, 15)
-
-local autoGunRow = createOptionRow(
-    "Auto Farm Mastery Gun",
-    nil
-)
-
-local autoGunToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Farm Mastery Gun logic goes here
-    end
-)
-
-autoGunToggle.Parent = autoGunRow
-autoGunToggle.Position = UDim2.new(1, -60, 0, 15)
-
-local autoSwordRow = createOptionRow(
-    "Auto Farm Mastery All Sword",
-    nil
-)
-
-local autoSwordToggle = createToggle(
-    false,
-    TOGGLE_ON,
-    TOGGLE_OFF,
-    function(state)
-        -- Auto Farm Mastery All Sword logic goes here
-    end
-)
-
-autoSwordToggle.Parent = autoSwordRow
-autoSwordToggle.Position = UDim2.new(1, -60, 0, 15)
-
--- ==========================================
--- SETTINGS PAGE
--- ==========================================
-
-local SettingsPage = Instance.new("Frame")
-SettingsPage.Name = "SettingsPage"
-SettingsPage.BackgroundTransparency = 1
-SettingsPage.Size = UDim2.new(1, 0, 1, 0)
-SettingsPage.Visible = false
-SettingsPage.Parent = TabContainer
-
-local SettingsTitle = Instance.new("TextLabel")
-SettingsTitle.BackgroundTransparency = 1
-SettingsTitle.Text = "Settings"
-SettingsTitle.TextColor3 = TEXT_COLOR
-SettingsTitle.Font = Enum.Font.GothamBold
-SettingsTitle.TextSize = 18
-SettingsTitle.Size = UDim2.new(1, -20, 0, 30)
-SettingsTitle.Position = UDim2.new(0, 10, 0, 10)
-SettingsTitle.TextXAlignment = Enum.TextXAlignment.Left
-SettingsTitle.Parent = SettingsPage
-
-local SettingsInfo = Instance.new("TextLabel")
-SettingsInfo.BackgroundTransparency = 1
-SettingsInfo.Text = "UI settings and additional options can be added here."
-SettingsInfo.TextColor3 = SUBTEXT_COLOR
-SettingsInfo.Font = Enum.Font.Gotham
-SettingsInfo.TextSize = 13
-SettingsInfo.Size = UDim2.new(1, -20, 0, 60)
-SettingsInfo.Position = UDim2.new(0, 10, 0, 45)
-SettingsInfo.TextWrapped = true
-SettingsInfo.TextXAlignment = Enum.TextXAlignment.Left
-SettingsInfo.TextYAlignment = Enum.TextYAlignment.Top
-SettingsInfo.Parent = SettingsPage
-
-local function createCategoryPage(name, description, entries)
-    local page = Instance.new("Frame")
-    page.Name = name .. "Page"
-    page.BackgroundTransparency = 1
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.Visible = false
-    page.Parent = TabContainer
-
-    local pageScroll = Instance.new("ScrollingFrame")
-    pageScroll.Name = "ScrollFrame"
-    pageScroll.BackgroundTransparency = 1
-    pageScroll.BorderSizePixel = 0
-    pageScroll.Size = UDim2.new(1, 0, 1, 0)
-    pageScroll.ScrollBarThickness = 2
-    pageScroll.ScrollBarImageColor3 = SUBTEXT_COLOR
-    pageScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    pageScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    pageScroll.Parent = page
-
-    local pagePadding = Instance.new("UIPadding")
-    pagePadding.PaddingTop = UDim.new(0, 10)
-    pagePadding.PaddingLeft = UDim.new(0, 10)
-    pagePadding.PaddingRight = UDim.new(0, 10)
-    pagePadding.PaddingBottom = UDim.new(0, 10)
-    pagePadding.Parent = pageScroll
-
-    local pageLayout = Instance.new("UIListLayout")
-    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    pageLayout.Padding = UDim.new(0, 8)
-    pageLayout.Parent = pageScroll
-
-    local pageTitle = Instance.new("TextLabel")
-    pageTitle.Name = "PageTitle"
-    pageTitle.BackgroundTransparency = 1
-    pageTitle.Text = name
-    pageTitle.TextColor3 = TEXT_COLOR
-    pageTitle.Font = Enum.Font.GothamBold
-    pageTitle.TextSize = 18
-    pageTitle.Size = UDim2.new(1, 0, 0, 24)
-    pageTitle.TextXAlignment = Enum.TextXAlignment.Left
-    pageTitle.Parent = pageScroll
-
-    local pageDescription = Instance.new("TextLabel")
-    pageDescription.Name = "PageDescription"
-    pageDescription.BackgroundTransparency = 1
-    pageDescription.Text = description
-    pageDescription.TextColor3 = SUBTEXT_COLOR
-    pageDescription.Font = Enum.Font.Gotham
-    pageDescription.TextSize = 12
-    pageDescription.TextWrapped = true
-    pageDescription.Size = UDim2.new(1, 0, 0, 30)
-    pageDescription.TextXAlignment = Enum.TextXAlignment.Left
-    pageDescription.Parent = pageScroll
-
-    for index, entry in ipairs(entries) do
-        local row = Instance.new("Frame")
-        row.Name = entry.Title
-        row.BackgroundColor3 = CARD_COLOR
-        row.BorderSizePixel = 1
-        row.BorderColor3 = ACCENT_COLOR
-        row.Size = UDim2.new(1, 0, 0, 58)
-        row.LayoutOrder = index
-        row.Parent = pageScroll
-
-        local rowCorner = Instance.new("UICorner")
-        rowCorner.CornerRadius = UDim.new(0, 6)
-        rowCorner.Parent = row
-        addStroke(row, Color3.fromRGB(48, 59, 76), 1, 0.35)
-
-        local rowTitle = Instance.new("TextLabel")
-        rowTitle.BackgroundTransparency = 1
-        rowTitle.Text = entry.Title
-        rowTitle.TextColor3 = TEXT_COLOR
-        rowTitle.Font = Enum.Font.GothamSemibold
-        rowTitle.TextSize = 13
-        rowTitle.Size = UDim2.new(1, -190, 1, 0)
-        rowTitle.Position = UDim2.new(0, 10, 0, 0)
-        rowTitle.TextXAlignment = Enum.TextXAlignment.Left
-        rowTitle.Parent = row
-
-        local control
-        if entry.Type == "dropdown" then
-            control = createDropdown(entry.Value, entry.Options, function(value)
-                addLog(name .. ": " .. entry.Title .. " = " .. tostring(value), "success")
-            end)
-            control.Position = UDim2.new(1, -175, 0.5, -16)
-            control.Size = UDim2.new(0, 160, 0, 32)
-        else
-            control = createToggle(false, TOGGLE_ON, TOGGLE_OFF, function(state)
-                addLog(
-                    name .. ": " .. entry.Title .. (state and " enabled" or " disabled"),
-                    state and "success" or "info"
-                )
-            end)
-            control.Position = UDim2.new(1, -60, 0, 19)
-        end
-
-        control.Parent = row
-    end
-
-    return page
-end
-
-local CategoryPages = {
-    Setting = SettingsPage,
-    Farming = MainPage,
-    Fishing = createCategoryPage("Fishing", "Fishing tools and automation", {
-        {Title = "Auto Fishing", Type = "toggle"},
-        {Title = "Select Rod", Type = "dropdown", Value = "Fishing Rod", Options = {"Fishing Rod", "Pro Fishing Rod"}},
-        {Title = "Select Bait", Type = "dropdown", Value = "Basic Bait", Options = {"Basic Bait", "Fine Bait"}}
-    }),
-    Quest = createCategoryPage("Quest", "Quest tracking and completion tools", {
-        {Title = "Auto Quest", Type = "toggle"},
-        {Title = "Quest Mode", Type = "dropdown", Value = "Main Quest", Options = {"Main Quest", "Daily Quest", "Event Quest"}}
-    }),
-    Items = createCategoryPage("Items", "Item collection and inventory tools", {
-        {Title = "Auto Collect Items", Type = "toggle"},
-        {Title = "Item Filter", Type = "dropdown", Value = "All Items", Options = {"All Items", "Rare Items", "Materials"}}
-    }),
-    ["Sea Events"] = createCategoryPage("Sea Events", "Sea event detection and farming", {
-        {Title = "Auto Sea Events", Type = "toggle"},
-        {Title = "Event Target", Type = "dropdown", Value = "Any Event", Options = {"Any Event", "Sea Beast", "Ship Raid"}}
-    }),
-    ["Race Callout"] = createCategoryPage("Race Callout", "Race abilities and callout controls", {
-        {Title = "Auto Race Ability", Type = "toggle"},
-        {Title = "Race Priority", Type = "dropdown", Value = "Awaken First", Options = {"Awaken First", "Save Energy"}}
-    }),
-    Islands = createCategoryPage("Islands", "Island travel and discovery tools", {
-        {Title = "Auto Discover Islands", Type = "toggle"},
-        {Title = "Island Target", Type = "dropdown", Value = "Nearest Island", Options = {"Nearest Island", "Quest Island", "Event Island"}}
-    }),
-    Events = createCategoryPage("Events", "Limited-time event controls", {
-        {Title = "Auto Event Rewards", Type = "toggle"},
-        {Title = "Event Mode", Type = "dropdown", Value = "Active Events", Options = {"Active Events", "Rewards Only"}}
-    }),
-    ["Stats and Esp"] = createCategoryPage("Stats and Esp", "Player information and visual overlays", {
-        {Title = "Player ESP", Type = "toggle"},
-        {Title = "ESP Display", Type = "dropdown", Value = "Names and Distance", Options = {"Names and Distance", "Names Only", "Distance Only"}}
-    }),
-    ["Fruits and Raids"] = createCategoryPage("Fruits and Raids", "Fruit collection and raid controls", {
-        {Title = "Auto Collect Fruits", Type = "toggle"},
-        {Title = "Auto Raids", Type = "toggle"},
-        {Title = "Raid Type", Type = "dropdown", Value = "Any Raid", Options = {"Any Raid", "Normal Raid", "Advanced Raid"}}
-    }),
-    ["Local Player"] = createCategoryPage("Local Player", "Movement and local character controls", {
-        {Title = "Walk Speed", Type = "dropdown", Value = "Default", Options = {"Default", "Fast", "Very Fast"}},
-        {Title = "Anti AFK", Type = "toggle"}
-    }),
-    Teleport = createCategoryPage("Teleport", "Quick travel destinations", {
-        {Title = "Teleport to Island", Type = "dropdown", Value = "Select Island", Options = {"Select Island", "First Sea", "Second Sea", "Third Sea"}},
-        {Title = "Teleport to Player", Type = "dropdown", Value = "Select Player", Options = {"Select Player", "Nearest Player"}}
-    }),
-    Miscellaneous = createCategoryPage("Miscellaneous", "Additional utilities and preferences", {
-        {Title = "Auto Rejoin", Type = "toggle"},
-        {Title = "UI Notifications", Type = "toggle"},
-        {Title = "Notification Style", Type = "dropdown", Value = "Compact", Options = {"Compact", "Detailed"}}
-    })
+export default {
+  async fetch(request, env, ctx) {
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
+<title>Blitz Alts</title>
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
--- ==========================================
--- TABS
--- ==========================================
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 
-local tabs = {}
+body {
+  background: #06080d;
 
-local function createTabButton(name, layoutOrder, pageFrame)
-    local btn = Instance.new("TextButton")
+  color: #f3f5fa;
 
-    btn.Name = name .. "Tab"
-    btn.BackgroundColor3 =
-        pageFrame.Visible
-        and BUTTON_ACTIVE
-        or BUTTON_INACTIVE
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 
-    btn.BorderSizePixel = 1
-    btn.BorderColor3 = ACCENT_COLOR
-    btn.Size = UDim2.new(1, 0, 0, 36)
-    btn.LayoutOrder = layoutOrder
-    btn.Text = name
-    btn.TextColor3 =
-        pageFrame.Visible
-        and TEXT_COLOR
-        or SUBTEXT_COLOR
+  -webkit-font-smoothing: antialiased;
+}
 
-    btn.Font = Enum.Font.GothamMedium
-    btn.TextSize = 13
-    btn.AutoButtonColor = false
-    btn.Parent = Sidebar
 
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = btn
+/* =========================================================
+   VARIABLES
+========================================================= */
 
-    table.insert(
-        tabs,
-        {
-            Button = btn,
-            Page = pageFrame
+:root {
+
+  --background: #0a0e16;
+  --background-dark: #070a10;
+
+  --sidebar: #101621;
+
+  --panel: #141b27;
+  --panel-hover: #181f2d;
+
+  --border: #222c3c;
+  --border-light: #2a3548;
+
+  --text: #f2f4f9;
+  --text-secondary: #8995a9;
+  --text-muted: #647187;
+
+  --purple: #5d5cff;
+  --purple-light: #704fff;
+
+  --green: #35d49a;
+
+  --red: #ff5d78;
+
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+#app {
+
+  position: fixed;
+
+  inset: 18px;
+
+  min-width: 820px;
+  min-height: 560px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 80% -20%,
+      rgba(91,92,255,.08),
+      transparent 32%
+    ),
+
+    var(--background);
+
+  border: 1px solid #202938;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.55);
+
+}
+
+
+/* =========================================================
+   TITLE BAR
+========================================================= */
+
+.titlebar {
+
+  height: 58px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  background:
+    rgba(13,17,26,.96);
+
+  border-bottom:
+    1px solid rgba(255,255,255,.035);
+
+  user-select: none;
+
+  -webkit-app-region: drag;
+
+}
+
+
+.titlebar-left {
+
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding-left: 19px;
+
+}
+
+
+.titlebar-brand {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+}
+
+
+.titlebar-logo {
+
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6264ff,
+      #754dff
+    );
+
+  box-shadow:
+    0 0 20px rgba(91,92,255,.23);
+
+}
+
+
+.titlebar-logo svg {
+
+  width: 17px;
+  height: 17px;
+
+  fill: white;
+
+}
+
+
+.titlebar-name {
+
+  color: #f4f5f9;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  letter-spacing: -.2px;
+
+}
+
+
+.titlebar-description {
+
+  color: #69758a;
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+}
+
+
+.window-controls {
+
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  -webkit-app-region: no-drag;
+
+}
+
+
+.window-button {
+
+  width: 52px;
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+
+  color: #68758a;
+
+  cursor: pointer;
+
+  transition:
+    color .15s ease,
+    background .15s ease;
+
+}
+
+
+.window-button:hover {
+
+  color: #f1f3f7;
+
+  background:
+    rgba(255,255,255,.045);
+
+}
+
+
+.window-button.close:hover {
+
+  color: white;
+
+  background: #df455e;
+
+}
+
+
+.window-button svg {
+
+  width: 12px;
+  height: 12px;
+
+}
+
+
+/* =========================================================
+   APPLICATION BODY
+========================================================= */
+
+.app-body {
+
+  flex: 1;
+
+  min-height: 0;
+
+  display: flex;
+
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+
+  width: 238px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  padding:
+    23px
+    16px
+    16px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #111722 0%,
+      #0f1520 100%
+    );
+
+  border-right:
+    1px solid #202938;
+
+}
+
+
+/* =========================================================
+   SIDEBAR BRAND
+========================================================= */
+
+.sidebar-brand {
+
+  padding:
+    2px
+    8px
+    26px;
+
+}
+
+
+.brand {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+}
+
+
+.brand-logo {
+
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #5d5fff,
+      #774dff
+    );
+
+  box-shadow:
+    0 0 25px rgba(91,92,255,.22);
+
+}
+
+
+.brand-logo svg {
+
+  width: 21px;
+  height: 21px;
+
+  fill: white;
+
+}
+
+
+.brand-text h1 {
+
+  color: #f2f4f9;
+
+  font-size: 18px;
+
+  line-height: 20px;
+
+  font-weight: 750;
+
+  letter-spacing: -.45px;
+
+}
+
+
+.brand-text p {
+
+  margin-top: 3px;
+
+  color: #717d91;
+
+  font-size: 10px;
+
+  font-weight: 500;
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.sidebar-label {
+
+  margin:
+    3px
+    8px
+    9px;
+
+  color: #566277;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: .9px;
+
+  text-transform: uppercase;
+
+}
+
+
+.nav {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+}
+
+
+.nav-button {
+
+  width: 100%;
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    0
+    12px;
+
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: #8995a9;
+
+  cursor: pointer;
+
+  transition:
+    background .15s ease,
+    color .15s ease;
+
+}
+
+
+.nav-button:hover {
+
+  color: #dce1eb;
+
+  background:
+    rgba(255,255,255,.035);
+
+}
+
+
+.nav-button.active {
+
+  color: #f2f3ff;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(91,92,255,.22),
+      rgba(91,92,255,.07)
+    );
+
+  box-shadow:
+    inset 2px 0 0 #6465ff;
+
+}
+
+
+.nav-button svg {
+
+  width: 19px;
+  height: 19px;
+
+  flex-shrink: 0;
+
+}
+
+
+.nav-button span {
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+}
+
+
+/* =========================================================
+   USER PROFILE CARD
+========================================================= */
+
+.sidebar-bottom {
+
+  margin-top: auto;
+
+}
+
+
+.profile-card {
+
+  width: 100%;
+
+  height: 63px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding:
+    9px
+    10px;
+
+  border:
+    1px solid #202b3c;
+
+  border-radius: 8px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0b101a,
+      #0e1420,
+      #11192a
+    );
+
+}
+
+
+.profile-avatar {
+
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #171f2e;
+
+  border:
+    1px solid #2b374b;
+
+  color: #7f8ba0;
+
+}
+
+
+.profile-avatar svg {
+
+  width: 19px;
+  height: 19px;
+
+}
+
+
+.profile-info {
+
+  min-width: 0;
+
+}
+
+
+.profile-name {
+
+  color: #e9ecf3;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+}
+
+
+.profile-description {
+
+  margin-top: 4px;
+
+  color: #647188;
+
+  font-size: 9px;
+
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+
+  flex: 1;
+
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  padding:
+    30px
+    27px
+    16px;
+
+}
+
+
+/* =========================================================
+   TOP SEARCH
+========================================================= */
+
+.topbar {
+
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+}
+
+
+.search {
+
+  position: relative;
+
+  flex: 1;
+
+  height: 44px;
+
+}
+
+
+.search-icon {
+
+  position: absolute;
+
+  left: 15px;
+  top: 50%;
+
+  width: 17px;
+  height: 17px;
+
+  transform:
+    translateY(-50%);
+
+  color: #6e7b91;
+
+}
+
+
+.search input {
+
+  width: 100%;
+  height: 100%;
+
+  padding:
+    0
+    14px
+    0
+    43px;
+
+  border:
+    1px solid #252f40;
+
+  border-radius: 10px;
+
+  background: #151c29;
+
+  color: #eef1f7;
+
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border .15s ease,
+    box-shadow .15s ease;
+
+}
+
+
+.search input::placeholder {
+
+  color: #667287;
+
+}
+
+
+.search input:focus {
+
+  border-color:
+    rgba(91,92,255,.62);
+
+  box-shadow:
+    0 0 0 3px rgba(91,92,255,.07);
+
+}
+
+
+.add-button {
+
+  height: 44px;
+
+  padding:
+    0
+    17px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #5d5eff,
+      #704fff
+    );
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 22px rgba(91,92,255,.15);
+
+  transition:
+    filter .15s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
+
+}
+
+
+.add-button:hover {
+
+  filter: brightness(1.08);
+
+  box-shadow:
+    0 9px 27px rgba(91,92,255,.22);
+
+}
+
+
+.add-button:active {
+
+  transform:
+    translateY(1px);
+
+}
+
+
+.add-button svg {
+
+  width: 16px;
+  height: 16px;
+
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.page-header {
+
+  margin-top: 29px;
+
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  flex-shrink: 0;
+
+}
+
+
+.page-title h2 {
+
+  color: #f3f4f8;
+
+  font-size: 27px;
+
+  line-height: 32px;
+
+  font-weight: 750;
+
+  letter-spacing: -.75px;
+
+}
+
+
+.page-title p {
+
+  margin-top: 5px;
+
+  color: #788499;
+
+  font-size: 11px;
+
+}
+
+
+/* =========================================================
+   HEADER STATS
+========================================================= */
+
+.header-actions {
+
+  display: flex;
+
+  align-items: stretch;
+
+  gap: 8px;
+
+}
+
+
+.total-card {
+
+  width: 116px;
+
+  height: 55px;
+
+  padding:
+    8px
+    12px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  border:
+    1px solid #252f40;
+
+  border-radius: 10px;
+
+  background: #151c28;
+
+}
+
+
+.total-label {
+
+  color: #68758a;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: .55px;
+
+  text-transform: uppercase;
+
+}
+
+
+.total-value {
+
+  margin-top: 3px;
+
+  display: flex;
+
+  align-items: baseline;
+
+  gap: 5px;
+
+}
+
+
+.total-number {
+
+  color: #f0f2f7;
+
+  font-size: 18px;
+
+  line-height: 18px;
+
+  font-weight: 750;
+
+}
+
+
+.total-word {
+
+  color: #778398;
+
+  font-size: 9px;
+
+}
+
+
+.clear-button {
+
+  height: 55px;
+
+  padding:
+    0
+    14px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  border:
+    1px solid #252f40;
+
+  border-radius: 10px;
+
+  background: #151c28;
+
+  color: #ff617c;
+
+  font-size: 11px;
+
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background .15s ease,
+    border .15s ease;
+
+}
+
+
+.clear-button:hover {
+
+  background:
+    rgba(255,88,119,.07);
+
+  border-color:
+    rgba(255,88,119,.23);
+
+}
+
+
+.clear-button svg {
+
+  width: 15px;
+  height: 15px;
+
+}
+
+
+/* =========================================================
+   ACCOUNT LIST
+========================================================= */
+
+.account-list {
+
+  flex: 1;
+
+  min-height: 0;
+
+  margin-top: 22px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+
+  overflow-y: auto;
+
+  padding-right: 3px;
+
+}
+
+
+.account-list::-webkit-scrollbar {
+
+  width: 5px;
+
+}
+
+
+.account-list::-webkit-scrollbar-track {
+
+  background: transparent;
+
+}
+
+
+.account-list::-webkit-scrollbar-thumb {
+
+  background: #283247;
+
+  border-radius: 10px;
+
+}
+
+
+/* =========================================================
+   ACCOUNT CARD
+========================================================= */
+
+.account-card {
+
+  min-height: 91px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  padding:
+    14px
+    15px
+    14px
+    17px;
+
+  border:
+    1px solid #222c3d;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      105deg,
+      #151c29,
+      #171e2c
+    );
+
+  box-shadow:
+    0 4px 15px rgba(0,0,0,.10);
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease;
+
+}
+
+
+.account-card:hover {
+
+  transform:
+    translateY(-1px);
+
+  border-color: #303b52;
+
+  background:
+    linear-gradient(
+      105deg,
+      #192131,
+      #181f2d
+    );
+
+}
+
+
+/* =========================================================
+   ACCOUNT LEFT
+========================================================= */
+
+.account-left {
+
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+}
+
+
+.account-avatar {
+
+  width: 54px;
+  height: 54px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid #2b364a;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #202a3d,
+      #121923
+    );
+
+  color: #78859a;
+
+}
+
+
+.account-avatar svg {
+
+  width: 24px;
+  height: 24px;
+
+}
+
+
+.account-info {
+
+  min-width: 0;
+
+}
+
+
+.account-name {
+
+  color: #eef1f7;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+}
+
+
+.account-username {
+
+  margin-top: 5px;
+
+  color: #7a879b;
+
+  font-size: 11px;
+
+}
+
+
+/* =========================================================
+   ACCOUNT STATUS
+========================================================= */
+
+.account-status {
+
+  width: 120px;
+
+  display: flex;
+
+  justify-content: center;
+
+}
+
+
+.status {
+
+  height: 29px;
+
+  padding:
+    0
+    10px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  border:
+    1px solid rgba(53,212,154,.13);
+
+  border-radius: 999px;
+
+  background:
+    rgba(53,212,154,.07);
+
+  color: #51dba5;
+
+  font-size: 10px;
+
+  font-weight: 650;
+
+}
+
+
+.status-dot {
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #35d49a;
+
+  box-shadow:
+    0 0 7px rgba(53,212,154,.45);
+
+}
+
+
+/* =========================================================
+   ACCOUNT ACTIONS
+========================================================= */
+
+.account-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+}
+
+
+.launch-button {
+
+  width: 108px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #5c5eff,
+      #704fff
+    );
+
+  color: white;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+}
+
+
+.launch-button:hover {
+
+  filter: brightness(1.08);
+
+}
+
+
+.icon-button {
+
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid #293449;
+
+  border-radius: 9px;
+
+  background: #1a2230;
+
+  color: #8995a9;
+
+  cursor: pointer;
+
+}
+
+
+.icon-button:hover {
+
+  color: white;
+
+  background: #212a3a;
+
+}
+
+
+.icon-button.delete:hover {
+
+  color: #ff637e;
+
+  border-color:
+    rgba(255,88,119,.25);
+
+  background:
+    rgba(255,88,119,.07);
+
+}
+
+
+.icon-button svg {
+
+  width: 16px;
+  height: 16px;
+
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-state {
+
+  flex: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+}
+
+
+.empty-box {
+
+  text-align: center;
+
+  transform:
+    translateY(-7px);
+
+}
+
+
+.empty-icon {
+
+  width: 54px;
+  height: 54px;
+
+  margin:
+    0
+    auto
+    14px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid #252f42;
+
+  border-radius: 15px;
+
+  background: #151c29;
+
+  color: #69758a;
+
+}
+
+
+.empty-icon svg {
+
+  width: 24px;
+  height: 24px;
+
+}
+
+
+.empty-title {
+
+  color: #e9ecf2;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+}
+
+
+.empty-description {
+
+  margin-top: 5px;
+
+  color: #68758a;
+
+  font-size: 11px;
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+
+  height: 28px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: flex-end;
+
+  gap: 8px;
+
+  color: #657187;
+
+  font-size: 9px;
+
+}
+
+
+.footer-count {
+
+  color: #8995a8;
+
+}
+
+
+.footer-dot {
+
+  width: 3px;
+  height: 3px;
+
+  margin-bottom: 3px;
+
+  border-radius: 50%;
+
+  background: #465268;
+
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  display: none;
+
+  align-items: center;
+
+  justify-content: center;
+
+  z-index: 100;
+
+  background:
+    rgba(3,5,9,.72);
+
+  backdrop-filter:
+    blur(8px);
+
+}
+
+
+.modal-overlay.open {
+
+  display: flex;
+
+}
+
+
+.modal {
+
+  width: 390px;
+
+  padding: 22px;
+
+  border:
+    1px solid #2a3548;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #171e2b,
+      #111721
+    );
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.55);
+
+  animation:
+    modalIn .16s ease-out;
+
+}
+
+
+@keyframes modalIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(5px)
+      scale(.985);
+
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+
+  }
+
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.modal-header {
+
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+}
+
+
+.modal-title {
+
+  color: #f1f3f8;
+
+  font-size: 17px;
+
+  font-weight: 720;
+
+}
+
+
+.modal-description {
+
+  margin-top: 5px;
+
+  color: #717d91;
+
+  font-size: 10px;
+
+  line-height: 15px;
+
+}
+
+
+.modal-close {
+
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #758197;
+
+  font-size: 18px;
+
+  cursor: pointer;
+
+}
+
+
+.modal-close:hover {
+
+  background:
+    rgba(255,255,255,.05);
+
+  color: white;
+
+}
+
+
+/* =========================================================
+   COOKIE FIELD
+========================================================= */
+
+.cookie-field {
+
+  margin-top: 22px;
+
+}
+
+
+.cookie-field label {
+
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #a4aec0;
+
+  font-size: 10px;
+
+  font-weight: 650;
+
+}
+
+
+.cookie-input {
+
+  width: 100%;
+
+  height: 43px;
+
+  padding:
+    0
+    12px;
+
+  border:
+    1px solid #293449;
+
+  border-radius: 9px;
+
+  background: #0e141e;
+
+  color: #f2f4f8;
+
+  font-size: 11px;
+
+  outline: none;
+
+}
+
+
+.cookie-input::placeholder {
+
+  color: #5c687d;
+
+}
+
+
+.cookie-input:focus {
+
+  border-color:
+    rgba(91,92,255,.65);
+
+  box-shadow:
+    0 0 0 3px rgba(91,92,255,.08);
+
+}
+
+
+/* =========================================================
+   MODAL BUTTONS
+========================================================= */
+
+.modal-buttons {
+
+  margin-top: 19px;
+
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 8px;
+
+}
+
+
+.modal-button {
+
+  height: 39px;
+
+  padding:
+    0
+    16px;
+
+  border-radius: 9px;
+
+  font-size: 11px;
+
+  font-weight: 650;
+
+  cursor: pointer;
+
+}
+
+
+.cancel-button {
+
+  border:
+    1px solid #293449;
+
+  background: #181f2c;
+
+  color: #929db0;
+
+}
+
+
+.cancel-button:hover {
+
+  background: #202938;
+
+  color: white;
+
+}
+
+
+.add-modal-button {
+
+  background:
+    linear-gradient(
+      135deg,
+      #5b5cff,
+      #704fff
+    );
+
+  color: white;
+
+  box-shadow:
+    0 5px 18px rgba(91,92,255,.15);
+
+}
+
+
+.add-modal-button:hover {
+
+  filter: brightness(1.08);
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1050px) {
+
+  .sidebar {
+
+    width: 215px;
+
+  }
+
+  .account-status {
+
+    width: 90px;
+
+  }
+
+}
+
+
+@media (max-width: 900px) {
+
+  .sidebar {
+
+    width: 190px;
+
+  }
+
+  .account-status {
+
+    display: none;
+
+  }
+
+  .main {
+
+    padding-left: 22px;
+    padding-right: 22px;
+
+  }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =======================================================
+     APPLICATION
+======================================================== -->
+
+<div id="app">
+
+
+  <!-- =====================================================
+       TITLE BAR
+  ====================================================== -->
+
+  <header
+    class="titlebar"
+    data-tauri-drag-region
+  >
+
+    <div class="titlebar-left">
+
+      <div class="titlebar-brand">
+
+        <div class="titlebar-logo">
+
+          <svg viewBox="0 0 24 24">
+            <path d="
+              M13 2
+              L3 14
+              H11
+              L10 22
+              L21 9
+              H13
+              L13 2
+              Z
+            "/>
+          </svg>
+
+        </div>
+
+        <span class="titlebar-name">
+          Blitz Alts
+        </span>
+
+      </div>
+
+      <span class="titlebar-description">
+        Roblox Account Manager
+      </span>
+
+    </div>
+
+
+    <!-- WINDOW CONTROLS -->
+
+    <div class="window-controls">
+
+      <button
+        id="minimizeButton"
+        class="window-button"
+        aria-label="Minimize"
+      >
+
+        <svg viewBox="0 0 12 12">
+
+          <path
+            d="M2 6H10"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+      </button>
+
+
+      <button
+        id="maximizeButton"
+        class="window-button"
+        aria-label="Maximize"
+      >
+
+        <svg viewBox="0 0 12 12">
+
+          <rect
+            x="2"
+            y="2"
+            width="8"
+            height="8"
+            rx="1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+
+        </svg>
+
+      </button>
+
+
+      <button
+        id="closeButton"
+        class="window-button close"
+        aria-label="Close"
+      >
+
+        <svg viewBox="0 0 12 12">
+
+          <path
+            d="M2 2L10 10M10 2L2 10"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- =====================================================
+       BODY
+  ====================================================== -->
+
+  <div class="app-body">
+
+
+    <!-- ===================================================
+         SIDEBAR
+    ==================================================== -->
+
+    <aside class="sidebar">
+
+
+      <div>
+
+
+        <!-- BRAND -->
+
+        <div class="sidebar-brand">
+
+          <div class="brand">
+
+            <div class="brand-logo">
+
+              <svg viewBox="0 0 24 24">
+
+                <path d="
+                  M13 2
+                  L3 14
+                  H11
+                  L10 22
+                  L21 9
+                  H13
+                  L13 2
+                  Z
+                "/>
+
+              </svg>
+
+            </div>
+
+
+            <div class="brand-text">
+
+              <h1>
+                Blitz Alts
+              </h1>
+
+              <p>
+                Roblox Account Manager
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- NAVIGATION -->
+
+        <div class="sidebar-label">
+          Workspace
+        </div>
+
+
+        <nav class="nav">
+
+          <button
+            class="nav-button active"
+          >
+
+            <svg
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="
+                  M16 21
+                  v-2
+                  a4 4 0 0 0-4-4
+                  H6
+                  a4 4 0 0 0-4 4
+                  v2
+
+                  M9 11
+                  a4 4 0 1 0 0-8
+                  4 4 0 0 0 0 8Z
+
+                  M22 21
+                  v-2
+                  a4 4 0 0 0-3-3.87
+
+                  M16 3.13
+                  a4 4 0 0 1 0 7.75
+                "
+              />
+
+            </svg>
+
+            <span>
+              Accounts
+            </span>
+
+          </button>
+
+        </nav>
+
+      </div>
+
+
+      <!-- =================================================
+           PROFILE
+      ================================================== -->
+
+      <div class="sidebar-bottom">
+
+        <div class="profile-card">
+
+          <div class="profile-avatar">
+
+            <svg
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.7"
+                d="
+                  M20 21
+                  a8 8 0 0 0-16 0
+
+                  M12 13
+                  a4 4 0 1 0 0-8
+                  4 4 0 0 0 0 8Z
+                "
+              />
+
+            </svg>
+
+          </div>
+
+
+          <div class="profile-info">
+
+            <div class="profile-name">
+              Local User
+            </div>
+
+            <div class="profile-description">
+              Private device
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+    </aside>
+
+
+    <!-- ===================================================
+         MAIN CONTENT
+    ==================================================== -->
+
+    <main class="main">
+
+
+      <!-- SEARCH -->
+
+      <div class="topbar">
+
+        <div class="search">
+
+          <svg
+            class="search-icon"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="
+                M21 21
+                l-4.35-4.35
+
+                m2.35-5.65
+                a8 8 0 1 1-16 0
+                a8 8 0 0 1 16 0Z
+              "
+            />
+
+          </svg>
+
+
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Search accounts..."
+            autocomplete="off"
+          />
+
+        </div>
+
+
+        <button
+          id="addAccountButton"
+          class="add-button"
+        >
+
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="
+                M12 5V19
+                M5 12H19
+              "
+            />
+
+          </svg>
+
+          Add Account
+
+        </button>
+
+      </div>
+
+
+      <!-- PAGE HEADER -->
+
+      <div class="page-header">
+
+
+        <div class="page-title">
+
+          <h2>
+            Accounts
+          </h2>
+
+          <p>
+            Manage your Roblox accounts and launch them instantly.
+          </p>
+
+        </div>
+
+
+        <div class="header-actions">
+
+
+          <div class="total-card">
+
+            <div class="total-label">
+              Total Accounts
+            </div>
+
+            <div class="total-value">
+
+              <span
+                id="accountCount"
+                class="total-number"
+              >
+                0
+              </span>
+
+              <span class="total-word">
+                Accounts
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <button
+            id="clearAllButton"
+            class="clear-button"
+          >
+
+            <svg
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="
+                  M19 7
+                  l-.9 12
+                  a2 2 0 0 1-2 1
+                  H7.9
+                  a2 2 0 0 1-2-1
+                  L5 7
+
+                  M4 7H20
+
+                  M9 7V4
+                  a1 1 0 0 1 1-1
+                  h4
+                  a1 1 0 0 1 1 1
+                  v3
+                "
+              />
+
+            </svg>
+
+            Clear All
+
+          </button>
+
+
+        </div>
+
+      </div>
+
+
+      <!-- ACCOUNT LIST -->
+
+      <div
+        id="accountList"
+        class="account-list"
+      ></div>
+
+
+      <!-- FOOTER -->
+
+      <div class="footer">
+
+        <span
+          id="footerCount"
+          class="footer-count"
+        >
+          0 accounts
+        </span>
+
+        <span class="footer-dot"></span>
+
+        <span>
+          Stored locally on your device
+        </span>
+
+      </div>
+
+
+    </main>
+
+
+  </div>
+
+
+</div>
+
+
+<!-- =======================================================
+     ADD ACCOUNT MODAL
+======================================================== -->
+
+<div
+  id="modalOverlay"
+  class="modal-overlay"
+>
+
+
+  <div class="modal">
+
+
+    <div class="modal-header">
+
+
+      <div>
+
+        <div class="modal-title">
+          Enter Your Roblox Cookies
+        </div>
+
+        <div class="modal-description">
+          Add an account to your private local app.
+        </div>
+
+      </div>
+
+
+      <button
+        id="closeModalButton"
+        class="modal-close"
+      >
+        ×
+      </button>
+
+
+    </div>
+
+
+    <!-- ONE FIELD ONLY -->
+
+    <div class="cookie-field">
+
+      <label>
+        Roblox Cookies
+      </label>
+
+      <input
+        id="cookieInput"
+        class="cookie-input"
+        type="password"
+        placeholder="Enter your Roblox cookie..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+    </div>
+
+
+    <!-- BUTTONS -->
+
+    <div class="modal-buttons">
+
+      <button
+        id="cancelModalButton"
+        class="modal-button cancel-button"
+      >
+        Cancel
+      </button>
+
+
+      <button
+        id="addModalButton"
+        class="modal-button add-modal-button"
+      >
+        Add
+      </button>
+
+    </div>
+
+
+  </div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   STATE
+========================================================= */
+
+/*
+  IMPORTANT:
+  No fake accounts are inserted here.
+
+  The application starts with exactly zero accounts.
+*/
+
+let accounts = [];
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const accountList =
+  document.getElementById(
+    "accountList"
+  );
+
+const accountCount =
+  document.getElementById(
+    "accountCount"
+  );
+
+const footerCount =
+  document.getElementById(
+    "footerCount"
+  );
+
+const searchInput =
+  document.getElementById(
+    "searchInput"
+  );
+
+const modalOverlay =
+  document.getElementById(
+    "modalOverlay"
+  );
+
+const cookieInput =
+  document.getElementById(
+    "cookieInput"
+  );
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value)
+
+    .replaceAll("&", "&amp;")
+
+    .replaceAll("<", "&lt;")
+
+    .replaceAll(">", "&gt;")
+
+    .replaceAll('"', "&quot;")
+
+    .replaceAll("'", "&#039;");
+
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+function renderEmptyState() {
+
+  accountList.innerHTML = \`
+
+    <div class="empty-state">
+
+      <div class="empty-box">
+
+        <div class="empty-icon">
+
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.6"
+              d="
+                M16 21
+                v-2
+                a4 4 0 0 0-4-4
+                H6
+                a4 4 0 0 0-4 4
+                v2
+
+                M9 11
+                a4 4 0 1 0 0-8
+                4 4 0 0 0 0 8Z
+              "
+            />
+
+          </svg>
+
+        </div>
+
+
+        <div class="empty-title">
+          No accounts found
+        </div>
+
+
+        <div class="empty-description">
+          Add an account to get started.
+        </div>
+
+      </div>
+
+    </div>
+
+  \`;
+
+}
+
+
+/* =========================================================
+   ACCOUNT CARD
+========================================================= */
+
+function renderAccount(account) {
+
+  return \`
+
+    <div
+      class="account-card"
+      data-account-id="\${escapeHtml(account.id)}"
+    >
+
+
+      <div class="account-left">
+
+
+        <div class="account-avatar">
+
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.7"
+              d="
+                M20 21
+                a8 8 0 0 0-16 0
+
+                M12 13
+                a4 4 0 1 0 0-8
+                4 4 0 0 0 0 8Z
+              "
+            />
+
+          </svg>
+
+        </div>
+
+
+        <div class="account-info">
+
+          <div class="account-name">
+            \${escapeHtml(account.name)}
+          </div>
+
+          <div class="account-username">
+            @\${escapeHtml(account.username)}
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+      <div class="account-status">
+
+        <div class="status">
+
+          <span class="status-dot"></span>
+
+          Ready
+
+        </div>
+
+      </div>
+
+
+      <div class="account-actions">
+
+
+        <button
+          class="launch-button"
+          data-action="launch"
+          data-id="\${escapeHtml(account.id)}"
+        >
+
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+
+            <path d="
+              M8 5
+              V19
+              L19 12
+              L8 5
+              Z
+            "/>
+
+          </svg>
+
+          Launch
+
+        </button>
+
+
+        <button
+          class="icon-button delete"
+          data-action="delete"
+          data-id="\${escapeHtml(account.id)}"
+          title="Delete account"
+        >
+
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.8"
+              d="
+                M4 7H20
+
+                M10 11V17
+                M14 11V17
+
+                M9 7V4
+                H15
+                V7
+
+                M6 7
+                L7 20
+                H17
+                L18 7
+              "
+            />
+
+          </svg>
+
+        </button>
+
+
+      </div>
+
+
+    </div>
+
+  \`;
+
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render() {
+
+  const query =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+
+  const filtered =
+    accounts.filter(
+      account => {
+
+        return (
+
+          account.name
+            .toLowerCase()
+            .includes(query)
+
+          ||
+
+          account.username
+            .toLowerCase()
+            .includes(query)
+
+        );
+
+      }
+    );
+
+
+  accountCount.textContent =
+    accounts.length;
+
+
+  footerCount.textContent =
+    accounts.length === 1
+      ? "1 account"
+      : accounts.length + " accounts";
+
+
+  if (filtered.length === 0) {
+
+    renderEmptyState();
+
+    return;
+
+  }
+
+
+  accountList.innerHTML =
+    filtered
+      .map(renderAccount)
+      .join("");
+
+}
+
+
+/* =========================================================
+   MODAL OPEN
+========================================================= */
+
+function openModal() {
+
+  modalOverlay.classList.add(
+    "open"
+  );
+
+  cookieInput.value = "";
+
+  setTimeout(
+    () => cookieInput.focus(),
+    50
+  );
+
+}
+
+
+/* =========================================================
+   MODAL CLOSE
+========================================================= */
+
+function closeModal() {
+
+  modalOverlay.classList.remove(
+    "open"
+  );
+
+  cookieInput.value = "";
+
+}
+
+
+/* =========================================================
+   ADD ACCOUNT
+========================================================= */
+
+/*
+  The raw authentication cookie is deliberately NOT stored
+  in localStorage and is NOT sent to the Worker/server.
+
+  The actual secure account-authentication implementation
+  should be handled by the native Tauri layer / secure
+  credential storage once the desktop application is wired up.
+*/
+
+function addAccount() {
+
+  const cookie =
+    cookieInput.value.trim();
+
+
+  if (!cookie) {
+
+    cookieInput.focus();
+
+    return;
+
+  }
+
+
+  /*
+    UI placeholder only.
+
+    Do NOT put the cookie into localStorage.
+
+    A real account should only be created after the native
+    authentication layer has securely validated the account
+    and returned non-sensitive account information.
+  */
+
+  console.log(
+    "Account authentication requested."
+  );
+
+
+  closeModal();
+
+}
+
+
+/* =========================================================
+   DELETE ACCOUNT
+========================================================= */
+
+function deleteAccount(id) {
+
+  const account =
+    accounts.find(
+      item => item.id === id
+    );
+
+
+  if (!account) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      "Delete " +
+      account.name +
+      "?"
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  accounts =
+    accounts.filter(
+      item => item.id !== id
+    );
+
+
+  render();
+
+}
+
+
+/* =========================================================
+   LAUNCH ACCOUNT
+========================================================= */
+
+function launchAccount(id) {
+
+  const account =
+    accounts.find(
+      item => item.id === id
+    );
+
+
+  if (!account) {
+    return;
+  }
+
+
+  /*
+    Native Tauri launch functionality goes here.
+
+    The frontend should only request the launch.
+    Authentication credentials should remain outside
+    the webpage layer.
+  */
+
+  console.log(
+    "Launch requested for:",
+    account.username
+  );
+
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+document
+  .getElementById(
+    "addAccountButton"
+  )
+  .addEventListener(
+    "click",
+    openModal
+  );
+
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+document
+  .getElementById(
+    "closeModalButton"
+  )
+  .addEventListener(
+    "click",
+    closeModal
+  );
+
+
+document
+  .getElementById(
+    "cancelModalButton"
+  )
+  .addEventListener(
+    "click",
+    closeModal
+  );
+
+
+/* =========================================================
+   ADD FROM MODAL
+========================================================= */
+
+document
+  .getElementById(
+    "addModalButton"
+  )
+  .addEventListener(
+    "click",
+    addAccount
+  );
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+searchInput.addEventListener(
+  "input",
+  render
+);
+
+
+/* =========================================================
+   MODAL BACKDROP
+========================================================= */
+
+modalOverlay.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target === modalOverlay
+    ) {
+
+      closeModal();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   ESCAPE KEY
+========================================================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Escape" &&
+      modalOverlay.classList.contains(
+        "open"
+      )
+    ) {
+
+      closeModal();
+
+    }
+
+
+    if (
+      event.key === "Enter" &&
+      modalOverlay.classList.contains(
+        "open"
+      )
+    ) {
+
+      addAccount();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   ACCOUNT ACTIONS
+========================================================= */
+
+accountList.addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "[data-action]"
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    const id =
+      button.dataset.id;
+
+
+    const action =
+      button.dataset.action;
+
+
+    if (
+      action === "delete"
+    ) {
+
+      deleteAccount(id);
+
+    }
+
+
+    if (
+      action === "launch"
+    ) {
+
+      launchAccount(id);
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CLEAR ALL
+========================================================= */
+
+document
+  .getElementById(
+    "clearAllButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      if (
+        accounts.length === 0
+      ) {
+
+        return;
+
+      }
+
+
+      const confirmed =
+        window.confirm(
+          "Delete all accounts?"
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      accounts = [];
+
+      render();
+
+    }
+  );
+
+
+/* =========================================================
+   TAURI WINDOW
+========================================================= */
+
+async function getTauriWindow() {
+
+  try {
+
+    if (
+      window.__TAURI__ &&
+      window.__TAURI__.window
+    ) {
+
+      return window
+        .__TAURI__
+        .window
+        .getCurrentWindow();
+
+    }
+
+  } catch (error) {
+
+    console.log(
+      "Tauri window API unavailable."
+    );
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   MINIMIZE
+========================================================= */
+
+document
+  .getElementById(
+    "minimizeButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      const window =
+        await getTauriWindow();
+
+
+      if (window) {
+
+        await window.minimize();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   MAXIMIZE
+========================================================= */
+
+document
+  .getElementById(
+    "maximizeButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      const window =
+        await getTauriWindow();
+
+
+      if (window) {
+
+        const maximized =
+          await window.isMaximized();
+
+
+        if (maximized) {
+
+          await window.unmaximize();
+
+        } else {
+
+          await window.maximize();
+
         }
-    )
 
-    btn.MouseButton1Click:Connect(function()
-        for _, tab in ipairs(tabs) do
-            local isSelected = tab.Button == btn
+      }
 
-            tab.Page.Visible = isSelected
+    }
+  );
 
-            playTween(tab.Button, 0.2, {
-                BackgroundColor3 = isSelected and BUTTON_ACTIVE or BUTTON_INACTIVE
-            })
 
-            tab.Button.TextColor3 =
-                isSelected
-                and TEXT_COLOR
-                or SUBTEXT_COLOR
-        end
-    end)
+/* =========================================================
+   CLOSE
+========================================================= */
 
-    btn.MouseEnter:Connect(function()
-        if pageFrame.Visible then
-            return
-        end
+document
+  .getElementById(
+    "closeButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
 
-        playTween(btn, 0.14, {BackgroundColor3 = CONTROL_HOVER})
-    end)
+      const window =
+        await getTauriWindow();
 
-    btn.MouseLeave:Connect(function()
-        if not pageFrame.Visible then
-            playTween(btn, 0.18, {BackgroundColor3 = BUTTON_INACTIVE})
-        end
-    end)
 
-    return btn
-end
+      if (window) {
 
-local tabNames = {
-    "Setting",
-    "Farming",
-    "Fishing",
-    "Quest",
-    "Items",
-    "Sea Events",
-    "Race Callout",
-    "Islands",
-    "Events",
-    "Stats and Esp",
-    "Fruits and Raids",
-    "Local Player",
-    "Teleport",
-    "Miscellaneous"
-}
+        await window.close();
 
-for layoutOrder, tabName in ipairs(tabNames) do
-    createTabButton(tabName, layoutOrder, CategoryPages[tabName])
-end
+      }
 
--- ==========================================
--- DRAGGABLE UTILITY
--- ==========================================
+    }
+  );
 
-local function makeDraggable(frame, dragHandle)
-    dragHandle = dragHandle or frame
 
-    local dragging = false
-    local dragStart = nil
-    local startPosition = nil
-    local hasMoved = false
+/* =========================================================
+   INITIAL STATE
+========================================================= */
 
-    dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
+render();
 
-            dragging = true
-            hasMoved = false
-            dragStart = input.Position
-            startPosition = frame.Position
-        end
-    end)
+</script>
 
-    UserInputService.InputChanged:Connect(function(input)
-        if not dragging then
-            return
-        end
+</body>
+</html>
+`;
 
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            local delta = input.Position - dragStart
-
-            if delta.Magnitude > 3 then
-                hasMoved = true
-            end
-
-            frame.Position = UDim2.new(
-                startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
-                startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            dragging = false
-        end
-    end)
-
-    return function()
-        return hasMoved
-    end
-end
-
--- ==========================================
--- ENABLE DRAGGING
--- ==========================================
-
-makeDraggable(
-    MainFrame,
-    Header
-)
-
-local logoMoved = makeDraggable(
-    Logo,
-    Logo
-)
-
-makeDraggable(
-    ActivityBox,
-    ActivityBox
-)
-
--- ==========================================
--- LOGO CLICK
--- ==========================================
-
-Logo.MouseButton1Click:Connect(function()
-    if not logoMoved() then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-
--- ==========================================
--- RIGHT CONTROL KEY TOGGLE
--- ==========================================
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then
-        return
-    end
-
-    if input.KeyCode == Enum.KeyCode.RightControl then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-
--- ==========================================
--- FINAL
--- ==========================================
-
-print("Xeno UI loaded successfully.")
+    return new Response(html, {
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8"
+      }
+    });
+  }
+};
